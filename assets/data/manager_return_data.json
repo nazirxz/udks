@@ -1,0 +1,217 @@
+{
+  "weekly_return_stats": {
+    "total_return_minggu_ini": 23,
+    "total_nilai_return": 1850000,
+    "rata_rata_return_harian": 3,
+    "alasan_terbanyak": "Expired"
+  },
+  "weekly_return_chart": [
+    {
+      "day": "Senin",
+      "day_short": "Sen",
+      "total_items": 5
+    },
+    {
+      "day": "Selasa", 
+      "day_short": "Sel",
+      "total_items": 3
+    },
+    {
+      "day": "Rabu",
+      "day_short": "Rab", 
+      "total_items": 7
+    },
+    {
+      "day": "Kamis",
+      "day_short": "Kam",
+      "total_items": 2
+    },
+    {
+      "day": "Jumat",
+      "day_short": "Jum",
+      "total_items": 4
+    },
+    {
+      "day": "Sabtu",
+      "day_short": "Sab",
+      "total_items": 1
+    },
+    {
+      "day": "Minggu",
+      "day_short": "Min",
+      "total_items": 1
+    }
+  ],
+  "weekly_return_data": [
+    {
+      "id": 1,
+      "nama_barang": "Susu Ultra Milk 1L",
+      "kategori": "Minuman",
+      "tanggal_return": "2025-06-23",
+      "jumlah": 5,
+      "lokasi_stok": "Gudang B - Rak 1",
+      "alasan_return": "Expired",
+      "customer": "Toko Berkah Jaya",
+      "status": "Approved",
+      "nilai_return": 90000
+    },
+    {
+      "id": 2,
+      "nama_barang": "Indomie Goreng Jumbo 129gr",
+      "kategori": "Makanan Instan",
+      "tanggal_return": "2025-06-23",
+      "jumlah": 10,
+      "lokasi_stok": "Gudang A - Rak 1",
+      "alasan_return": "Kemasan Rusak",
+      "customer": "Warung Bu Sri",
+      "status": "Pending",
+      "nilai_return": 35000
+    },
+    {
+      "id": 3,
+      "nama_barang": "Beras Premium 5kg",
+      "kategori": "Sembako",
+      "tanggal_return": "2025-06-22",
+      "jumlah": 2,
+      "lokasi_stok": "Gudang A - Rak 5",
+      "alasan_return": "Kualitas Buruk",
+      "customer": "Toko Sumber Rejeki",
+      "status": "Approved",
+      "nilai_return": 130000
+    },
+    {
+      "id": 4,
+      "nama_barang": "Aqua 600ml",
+      "kategori": "Minuman",
+      "tanggal_return": "2025-06-22",
+      "jumlah": 15,
+      "lokasi_stok": "Gudang B - Rak 3",
+      "alasan_return": "Salah Order",
+      "customer": "Minimarket Sejahtera",
+      "status": "Approved",
+      "nilai_return": 45000
+    },
+    {
+      "id": 5,
+      "nama_barang": "Sabun Mandi Lifebuoy",
+      "kategori": "Toiletries",
+      "tanggal_return": "2025-06-21",
+      "jumlah": 8,
+      "lokasi_stok": "Gudang C - Rak 2",
+      "alasan_return": "Expired",
+      "customer": "Toko Maju Bersama",
+      "status": "Rejected",
+      "nilai_return": 36000
+    },
+    {
+      "id": 6,
+      "nama_barang": "Teh Pucuk Harum 350ml",
+      "kategori": "Minuman",
+      "tanggal_return": "2025-06-21",
+      "jumlah": 12,
+      "lokasi_stok": "Gudang B - Rak 2",
+      "alasan_return": "Kemasan Rusak",
+      "customer": "Warung Pak Bambang",
+      "status": "Approved",
+      "nilai_return": 48000
+    },
+    {
+      "id": 7,
+      "nama_barang": "Minyak Goreng Tropical 2L",
+      "kategori": "Sembako",
+      "tanggal_return": "2025-06-20",
+      "jumlah": 3,
+      "lokasi_stok": "Gudang A - Rak 2",
+      "alasan_return": "Bocor",
+      "customer": "Toko Harapan Jaya",
+      "status": "Approved",
+      "nilai_return": 96000
+    },
+    {
+      "id": 8,
+      "nama_barang": "Gula Pasir 1kg",
+      "kategori": "Sembako",
+      "tanggal_return": "2025-06-20",
+      "jumlah": 4,
+      "lokasi_stok": "Gudang A - Rak 3",
+      "alasan_return": "Mengeras",
+      "customer": "Minimarket Barokah",
+      "status": "Pending",
+      "nilai_return": 60000
+    },
+    {
+      "id": 9,
+      "nama_barang": "Biskuit Roma Kelapa",
+      "kategori": "Snack",
+      "tanggal_return": "2025-06-19",
+      "jumlah": 20,
+      "lokasi_stok": "Gudang B - Rak 4",
+      "alasan_return": "Expired",
+      "customer": "Toko Bu Ningsih",
+      "status": "Approved",
+      "nilai_return": 70000
+    },
+    {
+      "id": 10,
+      "nama_barang": "Deterjen Rinso 800gr",
+      "kategori": "Toiletries",
+      "tanggal_return": "2025-06-19",
+      "jumlah": 6,
+      "lokasi_stok": "Gudang C - Rak 1",
+      "alasan_return": "Kemasan Rusak",
+      "customer": "Warung Sari Rasa",
+      "status": "Approved",
+      "nilai_return": 72000
+    },
+    {
+      "id": 11,
+      "nama_barang": "Kecap Manis ABC 620ml",
+      "kategori": "Bumbu Dapur",
+      "tanggal_return": "2025-06-18",
+      "jumlah": 7,
+      "lokasi_stok": "Gudang A - Rak 4",
+      "alasan_return": "Bocor",
+      "customer": "Toko Rezeki Baru",
+      "status": "Rejected",
+      "nilai_return": 59500
+    },
+    {
+      "id": 12,
+      "nama_barang": "Telur Ayam 1kg",
+      "kategori": "Protein",
+      "tanggal_return": "2025-06-18",
+      "jumlah": 2,
+      "lokasi_stok": "Gudang A - Kulkas",
+      "alasan_return": "Pecah",
+      "customer": "Warung Pak Dodi",
+      "status": "Approved",
+      "nilai_return": 56000
+    }
+  ],
+  "categories": [
+    "Semua Kategori",
+    "Makanan Instan",
+    "Minuman",
+    "Sembako",
+    "Toiletries",
+    "Bumbu Dapur",
+    "Snack",
+    "Protein"
+  ],
+  "return_reasons": [
+    "Semua Alasan",
+    "Expired",
+    "Kemasan Rusak",
+    "Kualitas Buruk",
+    "Salah Order",
+    "Bocor",
+    "Mengeras",
+    "Pecah"
+  ],
+  "return_status": [
+    "Semua Status",
+    "Pending",
+    "Approved",
+    "Rejected"
+  ]
+}

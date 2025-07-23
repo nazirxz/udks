@@ -1,0 +1,189 @@
+{
+  "weekly_purchase_stats": {
+    "total_pembelian_minggu_ini": 145,
+    "total_nilai_pembelian": 25500000,
+    "rata_rata_pembelian_harian": 20,
+    "supplier_aktif": 8
+  },
+  "weekly_purchase_chart": [
+    {
+      "day": "Senin",
+      "day_short": "Sen",
+      "total_items": 28
+    },
+    {
+      "day": "Selasa", 
+      "day_short": "Sel",
+      "total_items": 22
+    },
+    {
+      "day": "Rabu",
+      "day_short": "Rab", 
+      "total_items": 35
+    },
+    {
+      "day": "Kamis",
+      "day_short": "Kam",
+      "total_items": 18
+    },
+    {
+      "day": "Jumat",
+      "day_short": "Jum",
+      "total_items": 25
+    },
+    {
+      "day": "Sabtu",
+      "day_short": "Sab",
+      "total_items": 12
+    },
+    {
+      "day": "Minggu",
+      "day_short": "Min",
+      "total_items": 5
+    }
+  ],
+  "weekly_purchase_data": [
+    {
+      "id": 1,
+      "nama_barang": "Indomie Goreng Jumbo 129gr",
+      "kategori": "Makanan Instan",
+      "tanggal_masuk": "2025-06-23",
+      "jumlah": 50,
+      "lokasi_stok": "Gudang A - Rak 1",
+      "supplier": "PT Indofood CBP",
+      "harga_satuan": 3500,
+      "total_harga": 175000
+    },
+    {
+      "id": 2,
+      "nama_barang": "Aqua 600ml",
+      "kategori": "Minuman",
+      "tanggal_masuk": "2025-06-23",
+      "jumlah": 100,
+      "lokasi_stok": "Gudang B - Rak 3",
+      "supplier": "PT Aqua Golden Mississippi",
+      "harga_satuan": 3000,
+      "total_harga": 300000
+    },
+    {
+      "id": 3,
+      "nama_barang": "Beras Premium 5kg",
+      "kategori": "Sembako",
+      "tanggal_masuk": "2025-06-22",
+      "jumlah": 25,
+      "lokasi_stok": "Gudang A - Rak 5",
+      "supplier": "CV Beras Sejahtera",
+      "harga_satuan": 65000,
+      "total_harga": 1625000
+    },
+    {
+      "id": 4,
+      "nama_barang": "Minyak Goreng Tropical 2L",
+      "kategori": "Sembako",
+      "tanggal_masuk": "2025-06-22",
+      "jumlah": 30,
+      "lokasi_stok": "Gudang A - Rak 2",
+      "supplier": "PT Musim Mas",
+      "harga_satuan": 32000,
+      "total_harga": 960000
+    },
+    {
+      "id": 5,
+      "nama_barang": "Susu Ultra Milk 1L",
+      "kategori": "Minuman",
+      "tanggal_masuk": "2025-06-21",
+      "jumlah": 40,
+      "lokasi_stok": "Gudang B - Rak 1",
+      "supplier": "PT Ultrajaya",
+      "harga_satuan": 18000,
+      "total_harga": 720000
+    },
+    {
+      "id": 6,
+      "nama_barang": "Gula Pasir 1kg",
+      "kategori": "Sembako",
+      "tanggal_masuk": "2025-06-21",
+      "jumlah": 60,
+      "lokasi_stok": "Gudang A - Rak 3",
+      "supplier": "PT Perkebunan Nusantara",
+      "harga_satuan": 15000,
+      "total_harga": 900000
+    },
+    {
+      "id": 7,
+      "nama_barang": "Sabun Mandi Lifebuoy",
+      "kategori": "Toiletries",
+      "tanggal_masuk": "2025-06-20",
+      "jumlah": 45,
+      "lokasi_stok": "Gudang C - Rak 2",
+      "supplier": "PT Unilever Indonesia",
+      "harga_satuan": 4500,
+      "total_harga": 202500
+    },
+    {
+      "id": 8,
+      "nama_barang": "Teh Pucuk Harum 350ml",
+      "kategori": "Minuman",
+      "tanggal_masuk": "2025-06-20",
+      "jumlah": 80,
+      "lokasi_stok": "Gudang B - Rak 2",
+      "supplier": "PT Mayora Indah",
+      "harga_satuan": 4000,
+      "total_harga": 320000
+    },
+    {
+      "id": 9,
+      "nama_barang": "Deterjen Rinso 800gr",
+      "kategori": "Toiletries",
+      "tanggal_masuk": "2025-06-19",
+      "jumlah": 35,
+      "lokasi_stok": "Gudang C - Rak 1",
+      "supplier": "PT Unilever Indonesia",
+      "harga_satuan": 12000,
+      "total_harga": 420000
+    },
+    {
+      "id": 10,
+      "nama_barang": "Kecap Manis ABC 620ml",
+      "kategori": "Bumbu Dapur",
+      "tanggal_masuk": "2025-06-19",
+      "jumlah": 55,
+      "lokasi_stok": "Gudang A - Rak 4",
+      "supplier": "PT Heinz ABC Indonesia",
+      "harga_satuan": 8500,
+      "total_harga": 467500
+    },
+    {
+      "id": 11,
+      "nama_barang": "Biskuit Roma Kelapa",
+      "kategori": "Snack",
+      "tanggal_masuk": "2025-06-18",
+      "jumlah": 70,
+      "lokasi_stok": "Gudang B - Rak 4",
+      "supplier": "PT Mayora Indah",
+      "harga_satuan": 3500,
+      "total_harga": 245000
+    },
+    {
+      "id": 12,
+      "nama_barang": "Telur Ayam 1kg",
+      "kategori": "Protein",
+      "tanggal_masuk": "2025-06-18",
+      "jumlah": 40,
+      "lokasi_stok": "Gudang A - Kulkas",
+      "supplier": "Peternakan Sejahtera",
+      "harga_satuan": 28000,
+      "total_harga": 1120000
+    }
+  ],
+  "categories": [
+    "Semua Kategori",
+    "Makanan Instan",
+    "Minuman",
+    "Sembako",
+    "Toiletries",
+    "Bumbu Dapur",
+    "Snack",
+    "Protein"
+  ]
+}

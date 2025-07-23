@@ -1,0 +1,218 @@
+{
+  "weekly_sales_stats": {
+    "total_items_sold": 856,
+    "total_revenue": 12850000,
+    "total_transactions": 47,
+    "average_per_transaction": 273404
+  },
+  "weekly_sales_chart": [
+    {
+      "day": "Senin",
+      "day_short": "Sen",
+      "date": "2025-06-23",
+      "total_items": 142
+    },
+    {
+      "day": "Selasa", 
+      "day_short": "Sel",
+      "date": "2025-06-24",
+      "total_items": 103
+    },
+    {
+      "day": "Rabu",
+      "day_short": "Rab", 
+      "date": "2025-06-25",
+      "total_items": 253
+    },
+    {
+      "day": "Kamis",
+      "day_short": "Kam",
+      "date": "2025-06-26",
+      "total_items": 180
+    },
+    {
+      "day": "Jumat",
+      "day_short": "Jum",
+      "date": "2025-06-27",
+      "total_items": 40
+    },
+    {
+      "day": "Sabtu",
+      "day_short": "Sab",
+      "date": "2025-06-28",
+      "total_items": 0
+    },
+    {
+      "day": "Minggu",
+      "day_short": "Min",
+      "date": "2025-06-29",
+      "total_items": 0
+    }
+  ],
+  "weekly_sales_data": [
+    {
+      "id": 1,
+      "nama_barang": "Minyak Goreng Tropical 1L",
+      "kategori": "Minyak & Lemak",
+      "tanggal_keluar": "2025-06-27",
+      "jumlah": 25,
+      "lokasi_stok": "Gudang A - Rak 1",
+      "harga_satuan": 15000,
+      "total_harga": 375000
+    },
+    {
+      "id": 2,
+      "nama_barang": "Beras Premium 5kg",
+      "kategori": "Beras & Gandum",
+      "tanggal_keluar": "2025-06-27",
+      "jumlah": 15,
+      "lokasi_stok": "Gudang B - Rak 3",
+      "harga_satuan": 65000,
+      "total_harga": 975000
+    },
+    {
+      "id": 3,
+      "nama_barang": "Gula Pasir 1kg",
+      "kategori": "Gula & Pemanis",
+      "tanggal_keluar": "2025-06-26",
+      "jumlah": 40,
+      "lokasi_stok": "Gudang A - Rak 2",
+      "harga_satuan": 14000,
+      "total_harga": 560000
+    },
+    {
+      "id": 4,
+      "nama_barang": "Teh Kotak 1L",
+      "kategori": "Minuman",
+      "tanggal_keluar": "2025-06-26",
+      "jumlah": 60,
+      "lokasi_stok": "Gudang C - Rak 1",
+      "harga_satuan": 8500,
+      "total_harga": 510000
+    },
+    {
+      "id": 5,
+      "nama_barang": "Kopi Sachet ABC",
+      "kategori": "Minuman",
+      "tanggal_keluar": "2025-06-26",
+      "jumlah": 80,
+      "lokasi_stok": "Gudang A - Rak 5",
+      "harga_satuan": 2500,
+      "total_harga": 200000
+    },
+    {
+      "id": 6,
+      "nama_barang": "Indomie Goreng",
+      "kategori": "Mie Instant",
+      "tanggal_keluar": "2025-06-25",
+      "jumlah": 200,
+      "lokasi_stok": "Gudang B - Rak 1",
+      "harga_satuan": 3500,
+      "total_harga": 700000
+    },
+    {
+      "id": 7,
+      "nama_barang": "Sabun Mandi Lifebuoy",
+      "kategori": "Kebersihan",
+      "tanggal_keluar": "2025-06-25",
+      "jumlah": 35,
+      "lokasi_stok": "Gudang C - Rak 2",
+      "harga_satuan": 12000,
+      "total_harga": 420000
+    },
+    {
+      "id": 8,
+      "nama_barang": "Shampoo Pantene 170ml",
+      "kategori": "Perawatan Rambut",
+      "tanggal_keluar": "2025-06-25",
+      "jumlah": 18,
+      "lokasi_stok": "Gudang C - Rak 3",
+      "harga_satuan": 22000,
+      "total_harga": 396000
+    },
+    {
+      "id": 9,
+      "nama_barang": "Pasta Gigi Pepsodent",
+      "kategori": "Kebersihan",
+      "tanggal_keluar": "2025-06-24",
+      "jumlah": 45,
+      "lokasi_stok": "Gudang C - Rak 2",
+      "harga_satuan": 8000,
+      "total_harga": 360000
+    },
+    {
+      "id": 10,
+      "nama_barang": "Susu UHT Indomilk 1L",
+      "kategori": "Susu & Olahan",
+      "tanggal_keluar": "2025-06-24",
+      "jumlah": 30,
+      "lokasi_stok": "Gudang B - Rak 4",
+      "harga_satuan": 18000,
+      "total_harga": 540000
+    },
+    {
+      "id": 11,
+      "nama_barang": "Telur Ayam 1kg",
+      "kategori": "Protein",
+      "tanggal_keluar": "2025-06-24",
+      "jumlah": 28,
+      "lokasi_stok": "Gudang A - Rak 6",
+      "harga_satuan": 32000,
+      "total_harga": 896000
+    },
+    {
+      "id": 12,
+      "nama_barang": "Margarin Blueband 200g",
+      "kategori": "Minyak & Lemak",
+      "tanggal_keluar": "2025-06-23",
+      "jumlah": 22,
+      "lokasi_stok": "Gudang A - Rak 1",
+      "harga_satuan": 16000,
+      "total_harga": 352000
+    },
+    {
+      "id": 13,
+      "nama_barang": "Kerupuk Udang",
+      "kategori": "Snack",
+      "tanggal_keluar": "2025-06-23",
+      "jumlah": 80,
+      "lokasi_stok": "Gudang B - Rak 2",
+      "harga_satuan": 5500,
+      "total_harga": 440000
+    },
+    {
+      "id": 14,
+      "nama_barang": "Air Mineral Aqua 600ml",
+      "kategori": "Minuman",
+      "tanggal_keluar": "2025-06-23",
+      "jumlah": 40,
+      "lokasi_stok": "Gudang C - Rak 4",
+      "harga_satuan": 3000,
+      "total_harga": 120000
+    },
+    {
+      "id": 15,
+      "nama_barang": "Roti Tawar Sari Roti",
+      "kategori": "Roti & Kue",
+      "tanggal_keluar": "2025-06-22",
+      "jumlah": 15,
+      "lokasi_stok": "Gudang A - Rak 4",
+      "harga_satuan": 12500,
+      "total_harga": 187500
+    }
+  ],
+  "categories": [
+    "Semua Kategori",
+    "Minyak & Lemak", 
+    "Beras & Gandum",
+    "Gula & Pemanis",
+    "Minuman",
+    "Mie Instant",
+    "Kebersihan",
+    "Perawatan Rambut",
+    "Susu & Olahan",
+    "Protein",
+    "Snack",
+    "Roti & Kue"
+  ]
+}

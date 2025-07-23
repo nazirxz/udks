@@ -1,0 +1,36 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "admin",
+      "role": "admin",
+      "name": "Administrator",
+      "email": "admin@udkeluargasehati.com"
+    },
+    {
+      "id": 2,
+      "username": "sales",
+      "password": "sales",
+      "role": "sales",
+      "name": "Sales Representative",
+      "email": "sales@udkeluargasehati.com"
+    },
+    {
+      "id": 3,
+      "username": "pengecer",
+      "password": "pengecer",
+      "role": "pengecer",
+      "name": "Pengecer",
+      "email": "pengecer@udkeluargasehati.com"
+    },
+    {
+      "id": 4,
+      "username": "manager",
+      "password": "manager",
+      "role": "manager",
+      "name": "Manager",
+      "email": "manager@udkeluargasehati.com"
+    }
+  ]
+}

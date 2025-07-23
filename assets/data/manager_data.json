@@ -1,0 +1,98 @@
+{
+  "dashboard_stats": {
+    "barang_masuk_hari_ini": 125,
+    "barang_keluar_hari_ini": 98,
+    "transaksi_penjualan_hari_ini": 47,
+    "transaksi_pembelian_hari_ini": 23
+  },
+  "weekly_chart_data": [
+    {
+      "day": "Senin",
+      "day_short": "Sen",
+      "barang_masuk": 120,
+      "barang_keluar": 85
+    },
+    {
+      "day": "Selasa", 
+      "day_short": "Sel",
+      "barang_masuk": 95,
+      "barang_keluar": 110
+    },
+    {
+      "day": "Rabu",
+      "day_short": "Rab", 
+      "barang_masuk": 140,
+      "barang_keluar": 75
+    },
+    {
+      "day": "Kamis",
+      "day_short": "Kam",
+      "barang_masuk": 110,
+      "barang_keluar": 95
+    },
+    {
+      "day": "Jumat",
+      "day_short": "Jum",
+      "barang_masuk": 130,
+      "barang_keluar": 105
+    },
+    {
+      "day": "Sabtu",
+      "day_short": "Sab",
+      "barang_masuk": 155,
+      "barang_keluar": 125
+    },
+    {
+      "day": "Minggu",
+      "day_short": "Min",
+      "barang_masuk": 125,
+      "barang_keluar": 98
+    }
+  ],
+  "recent_transactions": [
+    {
+      "id": "TXN001",
+      "type": "penjualan",
+      "customer": "Toko Sari Rasa",
+      "amount": 2500000,
+      "items": 15,
+      "timestamp": "2025-06-27T14:30:00Z"
+    },
+    {
+      "id": "TXN002", 
+      "type": "pembelian",
+      "supplier": "PT Maju Jaya",
+      "amount": 5750000,
+      "items": 25,
+      "timestamp": "2025-06-27T10:15:00Z"
+    },
+    {
+      "id": "TXN003",
+      "type": "penjualan", 
+      "customer": "Warung Bu Siti",
+      "amount": 875000,
+      "items": 8,
+      "timestamp": "2025-06-27T13:45:00Z"
+    }
+  ],
+  "inventory_alerts": [
+    {
+      "product_name": "Minyak Goreng Tropical 1L",
+      "current_stock": 15,
+      "minimum_stock": 50,
+      "status": "low_stock"
+    },
+    {
+      "product_name": "Beras Premium 5kg", 
+      "current_stock": 3,
+      "minimum_stock": 20,
+      "status": "critical"
+    },
+    {
+      "product_name": "Gula Pasir 1kg",
+      "current_stock": 25,
+      "minimum_stock": 30,
+      "status": "low_stock"
+    }
+  ]
+}
