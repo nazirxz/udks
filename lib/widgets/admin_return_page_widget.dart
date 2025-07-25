@@ -59,18 +59,36 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
       final returnItemsData = returnItemsResult['data'] as List;
       
       for (final item in returnItemsData) {
-        processedData.add({
-          'id': item['id'] ?? 0,
-          'nama_barang': item['product_name'] ?? item['nama_barang'] ?? '',
-          'kategori_barang': item['category'] ?? item['kategori_barang'] ?? '',
-          'jumlah_barang': item['quantity'] ?? item['jumlah_barang'] ?? 0,
-          'nama_produsen': item['producer_name'] ?? item['nama_produsen'] ?? '',
-          'alasan_pengembalian': item['reason'] ?? item['alasan_pengembalian'] ?? '',
-          'tanggal_pengembalian': item['return_date'] ?? item['tanggal_pengembalian'] ?? '',
-          'waktu_pengembalian': item['return_time'] ?? item['waktu_pengembalian'] ?? '',
-          'status_pengembalian': item['status'] ?? item['status_pengembalian'] ?? '',
-          'reason_category': item['reason_category'] ?? '',
-        });
+        // Handle both ReturnItem objects and Map objects
+        if (item is Map<String, dynamic>) {
+          processedData.add({
+            'id': item['id'] ?? 0,
+            'nama_barang': item['product_name'] ?? item['nama_barang'] ?? '',
+            'kategori_barang': item['category'] ?? item['kategori_barang'] ?? '',
+            'jumlah_barang': item['quantity'] ?? item['jumlah_barang'] ?? 0,
+            'nama_produsen': item['producer_name'] ?? item['nama_produsen'] ?? '',
+            'alasan_pengembalian': item['reason'] ?? item['alasan_pengembalian'] ?? '',
+            'tanggal_pengembalian': item['return_date'] ?? item['tanggal_pengembalian'] ?? '',
+            'waktu_pengembalian': item['return_time'] ?? item['waktu_pengembalian'] ?? '',
+            'status_pengembalian': item['status'] ?? item['status_pengembalian'] ?? '',
+            'reason_category': item['reason_category'] ?? '',
+          });
+        } else {
+          // Handle ReturnItem objects
+          final returnItem = item as dynamic;
+          processedData.add({
+            'id': returnItem.id ?? 0,
+            'nama_barang': returnItem.namaBarang ?? '',
+            'kategori_barang': returnItem.kategoriBarang ?? '',
+            'jumlah_barang': returnItem.jumlahBarang ?? 0,
+            'nama_produsen': returnItem.namaProdusen ?? '',
+            'alasan_pengembalian': returnItem.alasanPengembalian ?? '',
+            'tanggal_pengembalian': returnItem.formattedDate ?? '',
+            'waktu_pengembalian': returnItem.formattedDate ?? '',
+            'status_pengembalian': returnItem.statusText ?? '',
+            'reason_category': '',
+          });
+        }
       }
 
       // Process chart data
@@ -229,18 +247,36 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
           final searchData = searchResult['data'] as List;
           
           for (final item in searchData) {
-            processedSearchData.add({
-              'id': item['id'] ?? 0,
-              'nama_barang': item['nama_barang'] ?? '',
-              'kategori_barang': item['kategori_barang'] ?? '',
-              'jumlah_barang': item['jumlah_barang'] ?? 0,
-              'nama_produsen': item['nama_produsen'] ?? '',
-              'alasan_pengembalian': item['alasan_pengembalian'] ?? '',
-              'tanggal_pengembalian': item['tanggal_pengembalian'] ?? '',
-              'waktu_pengembalian': item['waktu_pengembalian'] ?? '',
-              'status_pengembalian': item['status_pengembalian'] ?? '',
-              'reason_category': item['reason_category'] ?? '',
-            });
+            // Handle both ReturnItem objects and Map objects
+            if (item is Map<String, dynamic>) {
+              processedSearchData.add({
+                'id': item['id'] ?? 0,
+                'nama_barang': item['nama_barang'] ?? '',
+                'kategori_barang': item['kategori_barang'] ?? '',
+                'jumlah_barang': item['jumlah_barang'] ?? 0,
+                'nama_produsen': item['nama_produsen'] ?? '',
+                'alasan_pengembalian': item['alasan_pengembalian'] ?? '',
+                'tanggal_pengembalian': item['tanggal_pengembalian'] ?? '',
+                'waktu_pengembalian': item['waktu_pengembalian'] ?? '',
+                'status_pengembalian': item['status_pengembalian'] ?? '',
+                'reason_category': item['reason_category'] ?? '',
+              });
+            } else {
+              // Handle ReturnItem objects
+              final returnItem = item as dynamic;
+              processedSearchData.add({
+                'id': returnItem.id ?? 0,
+                'nama_barang': returnItem.namaBarang ?? '',
+                'kategori_barang': returnItem.kategoriBarang ?? '',
+                'jumlah_barang': returnItem.jumlahBarang ?? 0,
+                'nama_produsen': returnItem.namaProdusen ?? '',
+                'alasan_pengembalian': returnItem.alasanPengembalian ?? '',
+                'tanggal_pengembalian': returnItem.formattedDate ?? '',
+                'waktu_pengembalian': returnItem.formattedDate ?? '',
+                'status_pengembalian': returnItem.statusText ?? '',
+                'reason_category': '',
+              });
+            }
           }
 
           setState(() {

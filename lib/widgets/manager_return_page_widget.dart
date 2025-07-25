@@ -5,7 +5,7 @@ import 'manager_return_table_widget.dart';
 import 'manager_return_chart_widget.dart';
 
 class ManagerReturnPageWidget extends StatefulWidget {
-  const ManagerReturnPageWidget({super.key});
+  const ManagerReturnPageWidget({Key? key}) : super(key: key);
 
   @override
   _ManagerReturnPageWidgetState createState() => _ManagerReturnPageWidgetState();
@@ -37,19 +37,11 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
     _loadData();
   }
 
-  @override
-  void dispose() {
-    // Cancel any ongoing operations or timers here if needed
-    super.dispose();
-  }
-
   Future<void> _loadData() async {
     await _loadReturnItems();
   }
 
   Future<void> _loadReturnItems() async {
-    if (!mounted) return;
-    
     setState(() {
       isLoading = true;
       errorMessage = '';
@@ -67,8 +59,6 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
       
       // Load weekly stats
       final statsResult = await ReturnItemsApiService.getWeeklyReturnStats();
-
-      if (!mounted) return;
 
       setState(() {
         if (itemsResult['success']) {
@@ -96,8 +86,6 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
         isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
-      
       setState(() {
         errorMessage = 'Error loading data: $e';
         isLoading = false;
@@ -106,8 +94,6 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
   }
 
   Future<void> _handleSearch(String query, String category, String reason, String status) async {
-    if (!mounted) return;
-    
     setState(() {
       isLoading = true;
       searchQuery = query;
@@ -125,8 +111,6 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
         // Note: API might not support reason and status filters, adjust as needed
       );
 
-      if (!mounted) return;
-
       if (result['success']) {
         setState(() {
           returnItems = result['data'] ?? [];
@@ -142,17 +126,13 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
         });
       }
     } catch (e) {
-      if (!mounted) return;
-      
       setState(() {
         errorMessage = 'Error searching data: $e';
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 

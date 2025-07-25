@@ -13,8 +13,6 @@ class AdminSalesPageWidget extends StatefulWidget {
 class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
   List<Map<String, dynamic>> orderData = [];
   List<Map<String, dynamic>> filteredOrderData = [];
-  List<Map<String, dynamic>> vehicleData = [];
-  List<Map<String, dynamic>> filteredVehicleData = [];
   List<String> categories = ['Semua Kategori'];
   bool isLoading = true;
   int currentPage = 1;
@@ -105,11 +103,8 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         throw Exception('Failed to load data');
       }
 
-      // Keep empty vehicle data for now as per request
       if (mounted) {
         setState(() {
-          vehicleData = [];
-          filteredVehicleData = [];
           isLoading = false;
         });
       }
@@ -164,8 +159,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         setState(() {
           orderData = filteredFallback;
           filteredOrderData = filteredFallback;
-          vehicleData = [];
-          filteredVehicleData = [];
           currentPage = 1;
           totalPages = 1;
           isLoading = false;
@@ -224,15 +217,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
   void dispose() {
     _searchTimer?.cancel();
     super.dispose();
-  }
-
-  Future<void> _handleVehicleSearch(String query, String type) async {
-    // Keep empty for vehicle data as requested
-    if (mounted) {
-      setState(() {
-        filteredVehicleData = [];
-      });
-    }
   }
 
   Future<void> _handleViewDetail(int id) async {
@@ -477,7 +461,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Kelola pesanan barang dan kendaraan distribusi',
+                    'Kelola pesanan barang keluar dan distribusi',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white70,
@@ -489,11 +473,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
             
             // Order Table
             _buildOrderTable(),
-            
-            const SizedBox(height: 20),
-            
-            // Vehicle Table
-            _buildVehicleTable(),
             
             // Bottom spacing for better UX
             const SizedBox(height: 20),
@@ -705,111 +684,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
-  Widget _buildVehicleTable() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Data Kendaraan Distribusi',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Search Bar untuk Vehicle
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari plat nomor, sales, atau rute...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-              onChanged: (value) async {
-                await _handleVehicleSearch(value, 'Semua Type');
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Vehicle Table
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-                  columns: const [
-                    DataColumn(label: Text('No', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Type', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Plat Nomor', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Sales', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Rute', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Keterangan', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: filteredVehicleData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${index + 1}')),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getTypeColor(item['type']).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['type'] ?? '',
-                              style: TextStyle(
-                                color: _getTypeColor(item['type']),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(Text(item['plate_number'] ?? '')),
-                        DataCell(Text(item['sales'] ?? '')),
-                        DataCell(Text(item['route'] ?? '')),
-                        DataCell(Text(item['description'] ?? '')),
-                        DataCell(
-                          IconButton(
-                            icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                            onPressed: () => _handleViewVehicleDetail(item['id']),
-                            tooltip: 'Lihat Detail',
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Color _getCategoryColor(String? category) {
     switch (category?.toLowerCase()) {
       case 'elektronik':
@@ -843,45 +717,5 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     } catch (e) {
       return dateString;
     }
-  }
-
-  Color _getTypeColor(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'truk':
-        return Colors.blue;
-      case 'pick up':
-        return Colors.green;
-      case 'motor box':
-        return Colors.orange;
-      case 'van':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  void _handleViewVehicleDetail(int id) {
-    // Since vehicle data is empty, show info message
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.orange.shade600),
-              const SizedBox(width: 8),
-              const Text('Info Kendaraan'),
-            ],
-          ),
-          content: const Text('Data kendaraan belum tersedia.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
   }
 }

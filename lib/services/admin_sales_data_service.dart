@@ -67,48 +67,6 @@ class AdminSalesDataService {
             'status': 'Dibatalkan'
           }
         ],
-        'vehicle_data': [
-          {
-            'id': 1,
-            'type': 'Truk',
-            'plate_number': 'B 1234 ABC',
-            'sales': 'Ahmad Rizki',
-            'route': 'Jakarta - Tangerang',
-            'description': 'Truk box 4 ton untuk distribusi area barat'
-          },
-          {
-            'id': 2,
-            'type': 'Pick Up',
-            'plate_number': 'B 5678 DEF',
-            'sales': 'Siti Nurhaliza',
-            'route': 'Jakarta - Bekasi',
-            'description': 'Pick up untuk distribusi area timur'
-          },
-          {
-            'id': 3,
-            'type': 'Motor Box',
-            'plate_number': 'B 9012 GHI',
-            'sales': 'Budi Santoso',
-            'route': 'Jakarta Pusat',
-            'description': 'Motor box untuk distribusi dalam kota'
-          },
-          {
-            'id': 4,
-            'type': 'Van',
-            'plate_number': 'B 3456 JKL',
-            'sales': 'Rina Marlina',
-            'route': 'Jakarta - Depok',
-            'description': 'Van untuk distribusi area selatan'
-          },
-          {
-            'id': 5,
-            'type': 'Truk',
-            'plate_number': 'B 7890 MNO',
-            'sales': 'Joko Widodo',
-            'route': 'Jakarta - Bogor',
-            'description': 'Truk besar 8 ton untuk distribusi luar kota'
-          }
-        ],
         'categories': ['Semua Kategori', 'Minyak Goreng', 'Beras', 'Gula', 'Tepung', 'Mie Instan']
       };
     }
@@ -118,13 +76,6 @@ class AdminSalesDataService {
   static Future<List<Map<String, dynamic>>> getOrderData() async {
     await loadSalesData();
     final List<dynamic> data = _salesData?['order_data'] ?? [];
-    return data.cast<Map<String, dynamic>>();
-  }
-
-  // Get vehicle data
-  static Future<List<Map<String, dynamic>>> getVehicleData() async {
-    await loadSalesData();
-    final List<dynamic> data = _salesData?['vehicle_data'] ?? [];
     return data.cast<Map<String, dynamic>>();
   }
 
@@ -144,19 +95,6 @@ class AdminSalesDataService {
       return true;
     } catch (e) {
       print('Error deleting order: $e');
-      return false;
-    }
-  }
-
-  // Delete vehicle item (simulate)
-  static Future<bool> deleteVehicleItem(int id) async {
-    try {
-      await loadSalesData();
-      final List<dynamic> data = _salesData?['vehicle_data'] ?? [];
-      data.removeWhere((item) => item['id'] == id);
-      return true;
-    } catch (e) {
-      print('Error deleting vehicle: $e');
       return false;
     }
   }
@@ -183,34 +121,6 @@ class AdminSalesDataService {
         item['customer'].toString().toLowerCase().contains(query.toLowerCase()) ||
         item['order_number'].toString().toLowerCase().contains(query.toLowerCase()) ||
         item['product'].toString().toLowerCase().contains(query.toLowerCase())
-      ).toList();
-    }
-
-    return filteredData;
-  }
-
-  // Search and filter vehicle data
-  static Future<List<Map<String, dynamic>>> searchVehicleData({
-    String query = '',
-    String type = 'Semua Type',
-  }) async {
-    final allData = await getVehicleData();
-    
-    List<Map<String, dynamic>> filteredData = allData;
-
-    // Filter by type
-    if (type != 'Semua Type') {
-      filteredData = filteredData.where((item) => 
-        item['type'] == type
-      ).toList();
-    }
-
-    // Filter by search query
-    if (query.isNotEmpty) {
-      filteredData = filteredData.where((item) => 
-        item['plate_number'].toString().toLowerCase().contains(query.toLowerCase()) ||
-        item['sales'].toString().toLowerCase().contains(query.toLowerCase()) ||
-        item['route'].toString().toLowerCase().contains(query.toLowerCase())
       ).toList();
     }
 
