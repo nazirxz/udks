@@ -1,6 +1,7 @@
 // lib/services/sales_order_api_service.dart
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_config.dart';
@@ -12,10 +13,10 @@ class SalesOrderApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('access_token');
-      print('DEBUG: Retrieved auth token: ${token != null ? 'exists' : 'null'}');
+      debugPrint('DEBUG: Retrieved auth token: ${token != null ? 'exists' : 'null'}');
       return token;
     } catch (e) {
-      print('DEBUG: Error getting auth token: $e');
+      debugPrint('DEBUG: Error getting auth token: $e');
       return null;
     }
   }
@@ -69,29 +70,29 @@ class SalesOrderApiService {
 
       final uri = Uri.parse(ApiConfig.salesOrders).replace(queryParameters: queryParams);
 
-      print('DEBUG: Getting sales orders from: $uri');
+      debugPrint('DEBUG: Getting sales orders from: $uri');
 
       final response = await http.get(
         uri,
         headers: _getHeaders(token),
       );
 
-      print('DEBUG: Sales orders response status: ${response.statusCode}');
-      print('DEBUG: Sales orders response body: ${response.body}');
+      debugPrint('DEBUG: Sales orders response status: ${response.statusCode}');
+      debugPrint('DEBUG: Sales orders response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        print('DEBUG: Parsed response data type: ${responseData.runtimeType}');
-        print('DEBUG: Response data keys: ${responseData.keys}');
+        debugPrint('DEBUG: Parsed response data type: ${responseData.runtimeType}');
+        debugPrint('DEBUG: Response data keys: ${responseData.keys}');
         
         if (responseData['status'] == 'success' || responseData['success'] == true) {
           // Handle new pagination structure - data is inside data.data
           final dataWrapper = responseData['data'];
           final ordersData = dataWrapper['data'] ?? dataWrapper ?? [];
           
-          print('DEBUG: Data wrapper type: ${dataWrapper.runtimeType}');
-          print('DEBUG: Orders data type: ${ordersData.runtimeType}');
-          print('DEBUG: Orders data length: ${ordersData is List ? ordersData.length : 'Not a list'}');
+          debugPrint('DEBUG: Data wrapper type: ${dataWrapper.runtimeType}');
+          debugPrint('DEBUG: Orders data type: ${ordersData.runtimeType}');
+          debugPrint('DEBUG: Orders data length: ${ordersData is List ? ordersData.length : 'Not a list'}');
           
           // Handle both List and Map responses
           List<SalesOrder> orders = [];
@@ -104,7 +105,7 @@ class SalesOrderApiService {
             orders = [SalesOrder.fromJson(ordersData)];
           }
           
-          print('DEBUG: Parsed ${orders.length} orders successfully');
+          debugPrint('DEBUG: Parsed ${orders.length} orders successfully');
           
           return {
             'success': true,
@@ -127,8 +128,8 @@ class SalesOrderApiService {
         };
       }
     } catch (e) {
-      print('DEBUG: Error getting sales orders: $e');
-      print('DEBUG: Error type: ${e.runtimeType}');
+      debugPrint('DEBUG: Error getting sales orders: $e');
+      debugPrint('DEBUG: Error type: ${e.runtimeType}');
       
       if (e.toString().contains('type') && e.toString().contains('cast')) {
         return {
@@ -165,53 +166,147 @@ class SalesOrderApiService {
 
       final uri = Uri.parse(ApiConfig.orderShippingStatus(orderId));
 
-      print('DEBUG: Updating shipping status for order $orderId to $orderStatus');
+      debugPrint('DEBUG: Updating shipping status for order $orderId to $orderStatus');
 
       if (deliveryPhoto != null) {
-        // Use multipart request for photo upload
-        final request = http.MultipartRequest('PUT', uri);
-        request.headers.addAll(_getMultipartHeaders(token));
+        // Try direct PUT with multipart first
+        try {
+          final request = http.MultipartRequest('PUT', uri);
+          request.headers.addAll(_getMultipartHeaders(token));
 
-        // Add fields
-        request.fields['order_status'] = orderStatus;
-        if (deliveryNotes != null && deliveryNotes.isNotEmpty) {
-          request.fields['delivery_notes'] = deliveryNotes;
-        }
-        if (deliveredAt != null && deliveredAt.isNotEmpty) {
-          request.fields['delivered_at'] = deliveredAt;
-        }
+          // Add fields - ensure order_status is always included
+          request.fields['order_status'] = orderStatus;
+          debugPrint('DEBUG: Adding order_status field: $orderStatus');
+          
+          if (deliveryNotes != null && deliveryNotes.isNotEmpty) {
+            request.fields['delivery_notes'] = deliveryNotes;
+            debugPrint('DEBUG: Adding delivery_notes field: $deliveryNotes');
+          }
+          if (deliveredAt != null && deliveredAt.isNotEmpty) {
+            request.fields['delivered_at'] = deliveredAt;
+            debugPrint('DEBUG: Adding delivered_at field: $deliveredAt');
+          }
 
-        // Add photo file
-        final photoFile = await http.MultipartFile.fromPath(
-          'delivery_photo',
-          deliveryPhoto.path,
-        );
-        request.files.add(photoFile);
+          // Debug: Print all fields being sent
+          debugPrint('DEBUG: All fields being sent: ${request.fields}');
 
-        final streamedResponse = await request.send();
-        final response = await http.Response.fromStream(streamedResponse);
+          // Add photo file
+          final photoFile = await http.MultipartFile.fromPath(
+            'delivery_photo',
+            deliveryPhoto.path,
+          );
+          request.files.add(photoFile);
+          debugPrint('DEBUG: Added photo file: ${photoFile.filename}');
 
-        print('DEBUG: Update shipping status response status: ${response.statusCode}');
-        print('DEBUG: Update shipping status response body: ${response.body}');
+          final streamedResponse = await request.send();
+          final response = await http.Response.fromStream(streamedResponse);
 
-        if (response.statusCode == 200) {
-          final responseData = json.decode(response.body);
-          if (responseData['status'] == 'success' || responseData['success'] == true) {
-            return {
-              'success': true,
-              'data': responseData['data'],
-              'message': responseData['message'] ?? 'Shipping status updated successfully',
-            };
-          } else {
+          debugPrint('DEBUG: Update shipping status response status: ${response.statusCode}');
+          debugPrint('DEBUG: Update shipping status response body: ${response.body}');
+
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            final responseData = json.decode(response.body);
+            if (responseData['status'] == 'success' || responseData['success'] == true) {
+              return {
+                'success': true,
+                'data': responseData['data'],
+                'message': responseData['message'] ?? 'Shipping status updated successfully',
+              };
+            } else {
+              return {
+                'success': false,
+                'message': responseData['message'] ?? 'Failed to update shipping status',
+              };
+            }
+          } else if (response.statusCode == 422) {
+            // Try POST with _method override if PUT multipart fails with 422
+            debugPrint('DEBUG: PUT multipart failed with 422, trying POST with _method override');
+            
+            final postRequest = http.MultipartRequest('POST', uri);
+            postRequest.headers.addAll(_getMultipartHeaders(token));
+            
+            // Add method override
+            postRequest.fields['_method'] = 'PUT';
+            postRequest.fields['order_status'] = orderStatus;
+            
+            if (deliveryNotes != null && deliveryNotes.isNotEmpty) {
+              postRequest.fields['delivery_notes'] = deliveryNotes;
+            }
+            if (deliveredAt != null && deliveredAt.isNotEmpty) {
+              postRequest.fields['delivered_at'] = deliveredAt;
+            }
+            
+            // Add photo file again
+            final postPhotoFile = await http.MultipartFile.fromPath(
+              'delivery_photo',
+              deliveryPhoto.path,
+            );
+            postRequest.files.add(postPhotoFile);
+            
+            final postStreamedResponse = await postRequest.send();
+            final postResponse = await http.Response.fromStream(postStreamedResponse);
+            
+            debugPrint('DEBUG: POST with override response status: ${postResponse.statusCode}');
+            debugPrint('DEBUG: POST with override response body: ${postResponse.body}');
+            
+            if (postResponse.statusCode == 200 || postResponse.statusCode == 201) {
+              final responseData = json.decode(postResponse.body);
+              if (responseData['status'] == 'success' || responseData['success'] == true) {
+                return {
+                  'success': true,
+                  'data': responseData['data'],
+                  'message': responseData['message'] ?? 'Shipping status updated successfully',
+                };
+              }
+            }
+            
+            // If both attempts fail, return the original error
+            final errorBody = response.body.isNotEmpty ? json.decode(response.body) : {};
+            String errorMessage = 'Server error: ${response.statusCode}';
+            
+            if (errorBody['message'] != null) {
+              errorMessage = errorBody['message'];
+            }
+            
+            if (errorBody['errors'] != null) {
+              final errors = errorBody['errors'];
+              if (errors is Map) {
+                final errorDetails = errors.values.map((e) => e.toString()).join(', ');
+                errorMessage += ' - $errorDetails';
+              }
+            }
+            
             return {
               'success': false,
-              'message': responseData['message'] ?? 'Failed to update shipping status',
+              'message': errorMessage,
+            };
+          } else {
+            // Handle other error responses for multipart
+            final errorBody = response.body.isNotEmpty ? json.decode(response.body) : {};
+            String errorMessage = 'Server error: ${response.statusCode}';
+            
+            if (errorBody['message'] != null) {
+              errorMessage = errorBody['message'];
+            }
+            
+            if (errorBody['errors'] != null) {
+              final errors = errorBody['errors'];
+              if (errors is Map) {
+                final errorDetails = errors.values.map((e) => e.toString()).join(', ');
+                errorMessage += ' - $errorDetails';
+              }
+            }
+            
+            return {
+              'success': false,
+              'message': errorMessage,
             };
           }
-        } else {
+        } catch (e) {
+          debugPrint('DEBUG: Exception in multipart upload: $e');
           return {
             'success': false,
-            'message': 'Server error: ${response.statusCode}',
+            'message': 'Error uploading photo: $e',
           };
         }
       } else {
@@ -234,8 +329,8 @@ class SalesOrderApiService {
           body: json.encode(requestData),
         );
 
-        print('DEBUG: Update shipping status response status: ${response.statusCode}');
-        print('DEBUG: Update shipping status response body: ${response.body}');
+        debugPrint('DEBUG: Update shipping status response status: ${response.statusCode}');
+        debugPrint('DEBUG: Update shipping status response body: ${response.body}');
 
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
@@ -259,7 +354,7 @@ class SalesOrderApiService {
         }
       }
     } catch (e) {
-      print('DEBUG: Error updating shipping status: $e');
+      debugPrint('DEBUG: Error updating shipping status: $e');
       return {
         'success': false,
         'message': 'Network error: $e',
@@ -280,15 +375,15 @@ class SalesOrderApiService {
 
       final uri = Uri.parse(ApiConfig.orderDetail(orderId));
 
-      print('DEBUG: Getting order detail for ID: $orderId');
+      debugPrint('DEBUG: Getting order detail for ID: $orderId');
 
       final response = await http.get(
         uri,
         headers: _getHeaders(token),
       );
 
-      print('DEBUG: Order detail response status: ${response.statusCode}');
-      print('DEBUG: Order detail response body: ${response.body}');
+      debugPrint('DEBUG: Order detail response status: ${response.statusCode}');
+      debugPrint('DEBUG: Order detail response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -314,7 +409,7 @@ class SalesOrderApiService {
         };
       }
     } catch (e) {
-      print('DEBUG: Error getting order detail: $e');
+      debugPrint('DEBUG: Error getting order detail: $e');
       return {
         'success': false,
         'message': 'Network error: $e',

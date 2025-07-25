@@ -1,5 +1,4 @@
 // lib/screens/sales_dashboard.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -411,8 +410,8 @@ class _SalesDashboardState extends State<SalesDashboard> {
                 circleId: const CircleId('currentLocation'),
                 center: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
                 radius: 100,
-                fillColor: Colors.blue.withOpacity(0.1),
-                strokeColor: Colors.blue.withOpacity(0.3),
+                fillColor: Colors.blue.withValues(alpha: 0.1),
+                strokeColor: Colors.blue.withValues(alpha: 0.3),
                 strokeWidth: 2,
               ),
             } : {},
@@ -538,7 +537,7 @@ class _SalesDashboardState extends State<SalesDashboard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(order.status).withOpacity(0.1),
+                    color: _getStatusColor(order.status).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -1016,7 +1015,7 @@ class _SalesDashboardState extends State<SalesDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),
