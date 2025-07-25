@@ -1,6 +1,6 @@
 // lib/widgets/admin_sales_page_widget.dart
 import 'package:flutter/material.dart';
-import '../services/outgoing_items_service.dart';
+import '../services/sales_order_api_service.dart';
 import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -14,11 +14,11 @@ class AdminSalesPageWidget extends StatefulWidget {
 class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
   List<Map<String, dynamic>> orderData = [];
   List<Map<String, dynamic>> filteredOrderData = [];
-  List<String> categories = ['Semua Kategori'];
+  List<String> categories = ['Semua Status'];
   bool isLoading = true;
   int currentPage = 1;
   int totalPages = 1;
-  String selectedCategory = 'Semua Kategori';
+  String selectedCategory = 'Semua Status';
   String searchQuery = '';
   Timer? _searchTimer;
   final TextEditingController _searchController = TextEditingController();
@@ -65,21 +65,18 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
 
   Future<void> _loadCategories() async {
     try {
-      final response = await OutgoingItemsService.getCategories();
-      
-      if (response['status'] == 'success') {
-        final List<dynamic> categoryList = response['data'];
-        if (mounted) {
-          setState(() {
-            categories = ['Semua Kategori', ...categoryList.cast<String>()];
-          });
-        }
+      // For sales orders, we don't need categories from products
+      // We use status-based filtering instead
+      if (mounted) {
+        setState(() {
+          categories = ['Semua Status', 'Pending', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
+        });
       }
     } catch (e) {
       // Fallback categories for demo/testing
       if (mounted) {
         setState(() {
-          categories = ['Semua Kategori', 'Elektronik', 'Peralatan', 'Makanan', 'Minuman'];
+          categories = ['Semua Status', 'Pending', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
         });
       }
     }
@@ -97,68 +94,56 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
       
       // Use search API if there's a search query, otherwise use regular get items
       if (searchQuery.isNotEmpty) {
-        response = await OutgoingItemsService.searchItems(
-          query: searchQuery,
-          kategori: selectedCategory != 'Semua Kategori' ? selectedCategory : null,
+        response = await SalesOrderApiService.getSalesOrders(
+          search: searchQuery,
+          status: selectedCategory != 'Semua Status' ? selectedCategory.toLowerCase() : null,
         );
       } else {
-        response = await OutgoingItemsService.getOutgoingItems(
-          perPage: 15,
-          kategori: selectedCategory,
-          search: null, // Don't use search parameter in regular API
-          page: currentPage,
+        response = await SalesOrderApiService.getSalesOrders(
+          status: selectedCategory != 'Semua Status' ? selectedCategory.toLowerCase() : null,
         );
       }
 
-      if (response['status'] == 'success') {
-        // Handle different response structures
-        List<dynamic> items;
+      if (response['success'] == true) {
+        // Handle sales orders response
+        final salesOrders = response['data'] as List<dynamic>;
         
-        if (response['data'] is Map && response['data']['data'] != null) {
-          // Paginated response structure (like orders API)
-          items = response['data']['data'];
-          
-          if (mounted) {
-            setState(() {
-              orderData = items.cast<Map<String, dynamic>>();
-              filteredOrderData = orderData;
-              
-              // Handle pagination from nested structure
-              final pagination = response['data'];
-              currentPage = pagination['current_page'] ?? 1;
-              totalPages = pagination['last_page'] ?? 1;
-              
-              isLoading = false;
-              
-              // Show map if search found results with location data
-              _updateMapMarkers();
-            });
+        // Convert SalesOrder objects to Map format for compatibility
+        final List<Map<String, dynamic>> orderMaps = salesOrders.map((order) {
+          // Handle both SalesOrder objects and Map data
+          if (order is Map<String, dynamic>) {
+            return order;
+          } else {
+            // If it's a SalesOrder object, convert to map
+            return {
+              'id': order.id,
+              'order_number': order.orderNumber,
+              'pengecer_name': order.pengecerName,
+              'shipping_address': order.shippingAddress,
+              'city': order.city,
+              'latitude': order.latitude?.toString(),
+              'longitude': order.longitude?.toString(),
+              'total_amount': order.totalAmount?.toString(),
+              'order_status': order.orderStatus,
+              'created_at': order.createdAt?.toIso8601String(),
+              'order_items': order.orderItems?.map((item) => {
+                'product_name': item.productName,
+                'quantity': item.quantity,
+                'unit': item.unit,
+              }).toList(),
+            };
           }
-        } else {
-          // Simple array response structure
-          items = response['data'];
+        }).toList();
+        
+        if (mounted) {
+          setState(() {
+            orderData = orderMaps;
+            filteredOrderData = orderMaps;
+            isLoading = false;
+          });
           
-          if (mounted) {
-            setState(() {
-              orderData = items.cast<Map<String, dynamic>>();
-              filteredOrderData = orderData;
-              
-              // Handle pagination for search results
-              if (searchQuery.isNotEmpty) {
-                currentPage = 1;
-                totalPages = 1;
-              } else {
-                final pagination = response['pagination'];
-                currentPage = pagination['current_page'];
-                totalPages = pagination['last_page'];
-              }
-              
-              isLoading = false;
-              
-              // Show map if search found results with location data
-              _updateMapMarkers();
-            });
-          }
+          // Update map markers with actual data
+          _updateMapMarkers();
         }
       } else {
         throw Exception('Failed to load data');
@@ -170,42 +155,188 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         });
       }
     } catch (e) {
-      // Fallback demo data for testing
-      const fallbackItems = [
+      // Fallback demo data - using exact structure from your API response
+      final fallbackItems = [
         {
-          'id': 1,
-          'pengecer_name': 'Toko Komputer ABC',
-          'order_number': 'ORD-20250725-001',
-          'shipping_address': 'Jl. Sudirman No. 123',
-          'city': 'Pekanbaru',
+          'id': 4,
+          'user_id': '9',
+          'order_number': 'ORD-20250725-0001',
+          'pengecer_name': 'pengecer',
+          'pengecer_phone': '4349843449',
+          'pengecer_email': 'pengecer@gmail.com',
+          'shipping_address': 'gahwjwgehej',
+          'city': 'hwhwjwh',
+          'postal_code': '69494',
           'latitude': '0.50849350',
           'longitude': '101.40897630',
+          'location_address': 'gahwjwgehej (0.508494, 101.408976)',
+          'location_accuracy': '26.27',
+          'subtotal': '150000.00',
+          'shipping_cost': '0.00',
+          'tax_amount': '15000.00',
+          'discount_amount': '0.00',
           'total_amount': '165000.00',
+          'shipping_method': 'Free Delivery',
+          'payment_method': 'Cash on Delivery',
+          'payment_status': 'pending',
+          'voucher_code': null,
+          'voucher_discount': '0.00',
           'order_status': 'pending',
+          'notes': null,
           'created_at': '2025-07-25T04:00:10.000000Z',
+          'updated_at': '2025-07-25T04:00:10.000000Z',
+          'delivered_at': null,
+          'delivery_photo': null,
+          'delivery_notes': null,
           'order_items': [
-            {'product_name': 'Laptop ASUS ROG', 'quantity': 2}
+            {
+              'id': 4,
+              'order_id': '4',
+              'product_name': 'Fanta',
+              'product_image': 'images/fanta.png',
+              'quantity': 30,
+              'unit': 'pcs',
+              'unit_price': '5000.00',
+              'total_price': '150000.00'
+            }
+          ],
+        },
+        {
+          'id': 3,
+          'user_id': '9',
+          'order_number': 'ORD-20250724-0001',
+          'pengecer_name': 'pengecer',
+          'pengecer_phone': '08123456789',
+          'pengecer_email': 'pengecer@gmail.com',
+          'shipping_address': 'jl.ahajshsgsha',
+          'city': 'kahshsh',
+          'postal_code': '12645',
+          'latitude': '0.56751920',
+          'longitude': '101.42727980',
+          'location_address': 'jl.ahajshsgsha (0.567519, 101.427280)',
+          'location_accuracy': '30.00',
+          'subtotal': '25000.00',
+          'shipping_cost': '0.00',
+          'tax_amount': '2500.00',
+          'discount_amount': '0.00',
+          'total_amount': '27500.00',
+          'shipping_method': 'Free Delivery',
+          'payment_method': 'Bank Transfer',
+          'payment_status': 'pending',
+          'voucher_code': null,
+          'voucher_discount': '0.00',
+          'order_status': 'pending',
+          'notes': 'ahsnssg',
+          'created_at': '2025-07-24T07:15:52.000000Z',
+          'updated_at': '2025-07-24T07:15:52.000000Z',
+          'delivered_at': null,
+          'delivery_photo': null,
+          'delivery_notes': null,
+          'order_items': [
+            {
+              'id': 3,
+              'order_id': '3',
+              'product_name': 'Fanta',
+              'product_image': 'images/fanta.png',
+              'quantity': 5,
+              'unit': 'pcs',
+              'unit_price': '5000.00',
+              'total_price': '25000.00'
+            }
           ],
         },
         {
           'id': 2,
-          'pengecer_name': 'Gaming Store XYZ',
-          'order_number': 'ORD-20250724-001',
-          'shipping_address': 'Jl. Ahmad Yani No. 456',
-          'city': 'Pekanbaru',
-          'latitude': '0.56751920',
-          'longitude': '101.42727980',
-          'total_amount': '27500.00',
-          'order_status': 'delivered',
-          'created_at': '2025-07-24T07:15:52.000000Z',
+          'user_id': '9',
+          'order_number': 'ORD-20250723-0001',
+          'pengecer_name': 'pengecer_1',
+          'pengecer_phone': '082166543955',
+          'pengecer_email': 'pengecer@gmail.com',
+          'shipping_address': 'jl bukit sari',
+          'city': '2826501',
+          'postal_code': '28265',
+          'latitude': '0.46558915',
+          'longitude': '101.41074881',
+          'location_address': 'jl bukit sari (0.465589, 101.410749)',
+          'location_accuracy': '1.00',
+          'subtotal': '9000.00',
+          'shipping_cost': '0.00',
+          'tax_amount': '900.00',
+          'discount_amount': '0.00',
+          'total_amount': '9900.00',
+          'shipping_method': 'Free Delivery',
+          'payment_method': 'Cash on Delivery',
+          'payment_status': 'pending',
+          'voucher_code': null,
+          'voucher_discount': '0.00',
+          'order_status': 'pending',
+          'notes': null,
+          'created_at': '2025-07-23T14:24:11.000000Z',
+          'updated_at': '2025-07-23T14:24:11.000000Z',
+          'delivered_at': null,
+          'delivery_photo': null,
+          'delivery_notes': null,
           'order_items': [
-            {'product_name': 'Mouse Gaming Logitech', 'quantity': 5}
+            {
+              'id': 2,
+              'order_id': '2',
+              'product_name': 'Bear Brand',
+              'product_image': 'images/bear-brand.png',
+              'quantity': 1,
+              'unit': 'pcs',
+              'unit_price': '9000.00',
+              'total_price': '9000.00'
+            }
           ],
         },
+        {
+          'id': 1,
+          'user_id': '9',
+          'order_number': 'ORD-20250722-0001',
+          'pengecer_name': 'pengecer_1',
+          'pengecer_phone': '0822151558',
+          'pengecer_email': 'pengecer@gmail.com',
+          'shipping_address': 'whhwh2',
+          'city': 'pekanbatu',
+          'postal_code': '28265',
+          'latitude': '0.45720215',
+          'longitude': '101.43061794',
+          'location_address': 'whhwh2 (0.457202, 101.430618)',
+          'location_accuracy': '1.00',
+          'subtotal': '90000.00',
+          'shipping_cost': '0.00',
+          'tax_amount': '9000.00',
+          'discount_amount': '0.00',
+          'total_amount': '99000.00',
+          'shipping_method': 'Free Delivery',
+          'payment_method': 'Cash on Delivery',
+          'payment_status': 'pending',
+          'voucher_code': null,
+          'voucher_discount': '0.00',
+          'order_status': 'delivered',
+          'notes': null,
+          'created_at': '2025-07-22T14:36:06.000000Z',
+          'updated_at': '2025-07-23T13:58:55.000000Z',
+          'delivered_at': '2025-07-23T20:58:55.000000Z',
+          'delivery_photo': null,
+          'delivery_notes': null,
+          'order_items': [
+            {
+              'id': 1,
+              'order_id': '1',
+              'product_name': 'Bear Brand',
+              'product_image': 'images/bear-brand.png',
+              'quantity': 10,
+              'unit': 'pcs',
+              'unit_price': '9000.00',
+              'total_price': '90000.00'
+            }
+          ],
+        }
       ];
       
       // Filter fallback data based on search query
-      List<Map<String, dynamic>> filteredFallback = fallbackItems;
+      List<Map<String, dynamic>> filteredFallback = List.from(fallbackItems);
       
       if (searchQuery.isNotEmpty) {
         filteredFallback = fallbackItems.where((item) {
@@ -216,8 +347,11 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         }).toList();
       }
       
-      if (selectedCategory != 'Semua Kategori') {
-        // For demo purposes, keep all items regardless of category
+      if (selectedCategory != 'Semua Status') {
+        filteredFallback = filteredFallback.where((item) {
+          final status = item['order_status'].toString().toLowerCase();
+          return status == selectedCategory.toLowerCase();
+        }).toList();
       }
       
       if (mounted) {
@@ -290,14 +424,16 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
             ),
           );
         } catch (e) {
-          print('Error parsing coordinates for order ${order['id']}: $e');
+          debugPrint('Error parsing coordinates for order ${order['id']}: $e');
         }
       }
     }
     
     if (mounted) {
       setState(() {
-        showMap = searchQuery.isNotEmpty && hasLocationData && markers.isNotEmpty;
+        // Show map when there are search results with location data or when we have filtered results
+        showMap = hasLocationData && markers.isNotEmpty && 
+                 (searchQuery.isNotEmpty || selectedCategory != 'Semua Status');
       });
     }
     
@@ -411,6 +547,30 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatCurrency(String amount) {
     try {
       final double value = double.parse(amount);
@@ -423,27 +583,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     }
   }
 
-  Future<void> _handleViewDetail(int id) async {
-    // Find the order in current data
-    final order = orderData.firstWhere(
-      (item) => item['id'] == id,
-      orElse: () => {},
-    );
-    
-    if (order.isNotEmpty) {
-      _showOrderDetail(order);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data pesanan tidak ditemukan'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -494,7 +633,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.3),
+                    color: Colors.red.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -634,93 +773,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
-  Widget _buildMapView() {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.red.shade600),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lokasi Pengecer',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${markers.length} lokasi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: GoogleMap(
-                    initialCameraPosition: _initialPosition,
-                    markers: markers,
-                    onMapCreated: (GoogleMapController controller) {
-                      mapController = controller;
-                      // Fit markers after map is created
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        _fitMarkersOnMap();
-                      });
-                    },
-                    mapType: MapType.normal,
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Legend/Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Tap pada marker untuk melihat detail pesanan pengecer',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildOrderTable() {
     return Card(
       elevation: 4,
@@ -764,7 +816,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                   value: selectedCategory,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'Pilih Kategori',
+                    labelText: 'Filter Status',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -804,7 +856,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
+                  headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
                   columns: const [
                     DataColumn(label: Text('No', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Order Number', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -849,7 +901,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(item['order_status']).withOpacity(0.1),
+                              color: _getStatusColor(item['order_status']).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -965,7 +1017,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
               const Text('Lokasi Pengecer'),
             ],
           ),
-          content: Container(
+          content: SizedBox(
             width: 300,
             height: 300,
             child: GoogleMap(
@@ -1004,21 +1056,5 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
       },
     );
   }
-  }
 
-  String _formatDate(String dateString) {
-    try {
-      if (dateString.isEmpty) return '-';
-      
-      final DateTime date = DateTime.parse(dateString);
-      const List<String> months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      
-      return '${date.day} ${months[date.month - 1]} ${date.year}';
-    } catch (e) {
-      return dateString;
-    }
-  }
 }

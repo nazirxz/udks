@@ -1,4 +1,5 @@
 // lib/screens/sales_dashboard.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -54,8 +55,8 @@ class _SalesDashboardState extends State<SalesDashboard> {
     });
 
     try {
-      print('DEBUG: Loading sales orders with filter: $_selectedFilter');
-      print('DEBUG: API status filter: ${_selectedFilter == 'Semua' ? 'null' : _getApiStatus(_selectedFilter)}');
+      debugPrint('DEBUG: Loading sales orders with filter: $_selectedFilter');
+      debugPrint('DEBUG: API status filter: ${_selectedFilter == 'Semua' ? 'null' : _getApiStatus(_selectedFilter)}');
       
       final result = await SalesOrderApiService.getSalesOrders(
         status: _selectedFilter == 'Semua' ? null : _getApiStatus(_selectedFilter),
@@ -65,26 +66,26 @@ class _SalesDashboardState extends State<SalesDashboard> {
         warehouseLng: _warehouseLng,
       );
 
-      print('DEBUG: API result: $result');
-      print('DEBUG: Result success: ${result['success']}');
+      debugPrint('DEBUG: API result: $result');
+      debugPrint('DEBUG: Result success: ${result['success']}');
       
       if (result['success']) {
         final ordersData = result['data'];
-        print('DEBUG: Orders data type in dashboard: ${ordersData.runtimeType}');
-        print('DEBUG: Orders data: $ordersData');
+        debugPrint('DEBUG: Orders data type in dashboard: ${ordersData.runtimeType}');
+        debugPrint('DEBUG: Orders data: $ordersData');
         
         // Update warehouse info from API response
         if (result['warehouse'] != null) {
           _warehouseInfo = result['warehouse'];
           _warehouseLat = double.tryParse(result['warehouse']['latitude'].toString()) ?? _warehouseLat;
           _warehouseLng = double.tryParse(result['warehouse']['longitude'].toString()) ?? _warehouseLng;
-          print('DEBUG: Updated warehouse coordinates: $_warehouseLat, $_warehouseLng');
+          debugPrint('DEBUG: Updated warehouse coordinates: $_warehouseLat, $_warehouseLng');
         }
         
         // Update order summary
         if (result['summary'] != null) {
           _orderSummary = result['summary'];
-          print('DEBUG: Order summary: $_orderSummary');
+          debugPrint('DEBUG: Order summary: $_orderSummary');
         }
         
         setState(() {
@@ -101,8 +102,8 @@ class _SalesDashboardState extends State<SalesDashboard> {
         _showErrorSnackBar(result['message'] ?? 'Failed to load sales orders');
       }
     } catch (e, stackTrace) {
-      print('DEBUG: Exception in _loadSalesOrders: $e');
-      print('DEBUG: Stack trace: $stackTrace');
+      debugPrint('DEBUG: Exception in _loadSalesOrders: $e');
+      debugPrint('DEBUG: Stack trace: $stackTrace');
       _showErrorSnackBar('Error loading sales orders: $e');
     }
 
@@ -128,6 +129,30 @@ class _SalesDashboardState extends State<SalesDashboard> {
       default:
         return 'pending';
     }
+  }
+
+  String _getDisplayStatus(String apiStatus) {
+    switch (apiStatus.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Dikonfirmasi';
+      case 'processing':
+        return 'Diproses';
+      case 'shipped':
+        return 'Dikirim';
+      case 'delivered':
+        return 'Terkirim';
+      case 'cancelled':
+        return 'Dibatalkan';
+      default:
+        return 'Pending';
+    }
+  }
+
+  bool _matchesFilter(String orderStatus, String filterStatus) {
+    String displayStatus = _getDisplayStatus(orderStatus);
+    return displayStatus == filterStatus;
   }
 
   void _showErrorSnackBar(String message) {
@@ -168,7 +193,7 @@ class _SalesDashboardState extends State<SalesDashboard> {
         );
       }
     } catch (e) {
-      print('Error getting location: $e');
+      debugPrint('Error getting location: $e');
       _setupMarkersFromOrders();
     }
   }
@@ -206,8 +231,10 @@ class _SalesDashboardState extends State<SalesDashboard> {
 
     // Add sales order markers
     for (final order in _salesOrders) {
-      if (_selectedFilter == 'Semua' || 
-          order.statusText == _selectedFilter) {
+      // Check if order matches current filter
+      bool shouldShowOrder = _selectedFilter == 'Semua' || _matchesFilter(order.status, _selectedFilter);
+      
+      if (shouldShowOrder) {
         final markerColor = _getMarkerColor(order.status);
         markers.add(
           Marker(
@@ -215,7 +242,7 @@ class _SalesDashboardState extends State<SalesDashboard> {
             position: LatLng(order.latitude, order.longitude),
             infoWindow: InfoWindow(
               title: order.pengecerName,
-              snippet: '${order.shippingAddress} - ${order.statusText}',
+              snippet: '${order.shippingAddress} - ${_getDisplayStatus(order.status)}',
               onTap: () => _showOrderDetail(order),
             ),
             icon: BitmapDescriptor.defaultMarkerWithHue(markerColor),
@@ -252,7 +279,8 @@ class _SalesDashboardState extends State<SalesDashboard> {
     setState(() {
       _selectedFilter = filter;
     });
-    _setupMarkersFromOrders();
+    // Reload data from API with new filter
+    _loadSalesOrders();
   }
 
   void _changeMapStyle(MapType mapType) {
@@ -514,7 +542,7 @@ class _SalesDashboardState extends State<SalesDashboard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Status: ${order.statusText}',
+                    'Status: ${_getDisplayStatus(order.status)}',
                     style: TextStyle(
                       color: _getStatusColor(order.status),
                       fontWeight: FontWeight.bold,
