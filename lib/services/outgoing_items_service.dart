@@ -117,6 +117,10 @@ class OutgoingItemsService {
     String? kategori,
   }) async {
     try {
+      print('🔍 OutgoingItemsService.searchItems called');
+      print('📝 Query: "$query"');
+      print('🏷️ Kategori: "$kategori"');
+      
       final headers = await _getHeaders();
       
       Map<String, String> queryParams = {
@@ -131,6 +135,7 @@ class OutgoingItemsService {
         queryParameters: queryParams,
       );
       
+      print('🌐 Search URI: $uri');
       
       final response = await http.get(uri, headers: headers).timeout(
         const Duration(seconds: 10),
@@ -139,13 +144,19 @@ class OutgoingItemsService {
         },
       );
       
+      print('📊 Search Response Status: ${response.statusCode}');
+      print('📄 Search Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final result = json.decode(response.body);
+        print('✅ Search successful, items count: ${result['data']?.length ?? 0}');
+        return result;
       } else {
+        print('❌ Search failed with status: ${response.statusCode}');
         throw Exception('Failed to search items: ${response.statusCode} - ${response.reasonPhrase}');
       }
     } catch (e) {
+      print('💥 Search error: $e');
       throw Exception('Error searching items: $e');
     }
   }

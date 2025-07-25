@@ -105,7 +105,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         response = await OutgoingItemsService.getOutgoingItems(
           perPage: 15,
           kategori: selectedCategory,
-          search: null, // Don't use search parameter in regular API
+          search: null,
           page: currentPage,
         );
       }
@@ -214,10 +214,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
           final query = searchQuery.toLowerCase();
           return pengecer.contains(query) || address.contains(query);
         }).toList();
-      }
-      
-      if (selectedCategory != 'Semua Kategori') {
-        // For demo purposes, keep all items regardless of category
       }
       
       if (mounted) {
@@ -411,6 +407,30 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatCurrency(String amount) {
     try {
       final double value = double.parse(amount);
@@ -420,28 +440,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
       );
     } catch (e) {
       return amount;
-    }
-  }
-
-  Future<void> _handleViewDetail(int id) async {
-    // Find the order in current data
-    final order = orderData.firstWhere(
-      (item) => item['id'] == id,
-      orElse: () => {},
-    );
-    
-    if (order.isNotEmpty) {
-      _showOrderDetail(order);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data pesanan tidak ditemukan'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
     }
   }
 
@@ -542,180 +540,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
             // Bottom spacing for better UX
             const SizedBox(height: 20),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapView() {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.red.shade600),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lokasi Pengecer',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${markers.length} lokasi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: GoogleMap(
-                    initialCameraPosition: _initialPosition,
-                    markers: markers,
-                    onMapCreated: (GoogleMapController controller) {
-                      mapController = controller;
-                      // Fit markers after map is created
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        _fitMarkersOnMap();
-                      });
-                    },
-                    mapType: MapType.normal,
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Legend/Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Tap pada marker untuk melihat detail pesanan pengecer',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapView() {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.red.shade600),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lokasi Pengecer',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${markers.length} lokasi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: GoogleMap(
-                    initialCameraPosition: _initialPosition,
-                    markers: markers,
-                    onMapCreated: (GoogleMapController controller) {
-                      mapController = controller;
-                      // Fit markers after map is created
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        _fitMarkersOnMap();
-                      });
-                    },
-                    mapType: MapType.normal,
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Legend/Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Tap pada marker untuk melihat detail pesanan pengecer',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -938,6 +762,93 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
+  Widget _buildMapView() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.red.shade600),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Lokasi Pengecer',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${markers.length} lokasi',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: GoogleMap(
+                    initialCameraPosition: _initialPosition,
+                    markers: markers,
+                    onMapCreated: (GoogleMapController controller) {
+                      mapController = controller;
+                      // Fit markers after map is created
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        _fitMarkersOnMap();
+                      });
+                    },
+                    mapType: MapType.normal,
+                    myLocationEnabled: false,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: true,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Legend/Info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Tap pada marker untuk melihat detail pesanan pengecer',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'pending':
@@ -1003,7 +914,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         );
       },
     );
-  }
   }
 
   String _formatDate(String dateString) {
