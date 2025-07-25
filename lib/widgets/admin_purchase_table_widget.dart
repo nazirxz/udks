@@ -1,5 +1,6 @@
 // lib/widgets/admin_purchase_table_widget.dart
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class AdminPurchaseTableWidget extends StatefulWidget {
   final List<Map<String, dynamic>> purchaseData;
@@ -21,6 +22,22 @@ class AdminPurchaseTableWidget extends StatefulWidget {
 
 class _AdminPurchaseTableWidgetState extends State<AdminPurchaseTableWidget> {
   String _selectedCategory = 'Semua Kategori';
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      widget.onSearch(value, _selectedCategory);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +65,7 @@ class _AdminPurchaseTableWidgetState extends State<AdminPurchaseTableWidget> {
               children: [
                 // Search field
                 TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Cari nama barang, kategori, supplier, atau lokasi...',
                     prefixIcon: const Icon(Icons.search),
@@ -58,9 +76,7 @@ class _AdminPurchaseTableWidgetState extends State<AdminPurchaseTableWidget> {
                     filled: true,
                     fillColor: Colors.grey.shade50,
                   ),
-                  onChanged: (value) async {
-                    widget.onSearch(value, _selectedCategory);
-                  },
+                  onChanged: _onSearchChanged,
                 ),
                 const SizedBox(height: 12),
                 // Category dropdown
@@ -92,7 +108,8 @@ class _AdminPurchaseTableWidgetState extends State<AdminPurchaseTableWidget> {
                       setState(() {
                         _selectedCategory = value;
                       });
-                      widget.onSearch('', value);
+                      // Use current search query instead of empty string
+                      widget.onSearch(_searchController.text, value);
                     }
                   },
                 ),

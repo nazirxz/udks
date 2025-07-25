@@ -102,18 +102,44 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
         // Reset to original data
         await _loadIncomingItems();
       } else {
-        // Search with API
-        final result = await IncomingItemsApiService.searchIncomingItems(
-          query: query,
-          kategori: category == 'Semua Kategori' ? null : category,
-          stockFilter: selectedStockFilter == 'Semua Stok' ? null : selectedStockFilter,
-        );
+        // Search with API - handle both query and category filtering
+        Map<String, dynamic> result;
+        
+        if (query.isNotEmpty) {
+          // Use search API when there's a query
+          result = await IncomingItemsApiService.searchIncomingItems(
+            query: query,
+            kategori: category == 'Semua Kategori' ? null : category,
+            stockFilter: selectedStockFilter == 'Semua Stok' ? null : selectedStockFilter,
+          );
+        } else if (category != 'Semua Kategori') {
+          // Use category filter API when only category is selected
+          result = await IncomingItemsApiService.getIncomingItemsByCategory(
+            category,
+            stockFilter: selectedStockFilter == 'Semua Stok' ? null : selectedStockFilter,
+            perPage: itemsPerPage,
+            page: currentPage,
+          );
+        } else {
+          // Fallback to general API with filters
+          result = await IncomingItemsApiService.getIncomingItems(
+            page: currentPage,
+            perPage: itemsPerPage,
+            kategori: category == 'Semua Kategori' ? null : category,
+            search: query.isNotEmpty ? query : null,
+            stockFilter: selectedStockFilter == 'Semua Stok' ? null : selectedStockFilter,
+          );
+        }
 
         setState(() {
           if (result['success']) {
             filteredIncomingItems = result['data'] ?? [];
+            // Update pagination if available
+            final pagination = result['pagination'] ?? {};
+            currentPage = pagination['current_page'] ?? currentPage;
+            totalPages = pagination['last_page'] ?? totalPages;
           } else {
-            errorMessage = result['message'];
+            errorMessage = result['message'] ?? 'Pencarian gagal';
             filteredIncomingItems = [];
           }
           isLoading = false;
@@ -122,6 +148,7 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
     } catch (e) {
       setState(() {
         errorMessage = 'Error searching: $e';
+        filteredIncomingItems = [];
         isLoading = false;
       });
     }

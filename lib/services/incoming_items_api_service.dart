@@ -59,7 +59,13 @@ class IncomingItemsApiService {
         queryParameters: queryParams,
       );
 
+      print('Incoming Items API request: $uri');
+      print('Search: "$search", kategori: "$kategori", stockFilter: "$stockFilter"');
+
       final response = await http.get(uri, headers: _getHeaders(token));
+
+      print('Incoming Items API response status: ${response.statusCode}');
+      print('Incoming Items API response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -150,7 +156,13 @@ class IncomingItemsApiService {
         queryParameters: queryParams,
       );
 
+      print('Incoming Items by Category API request: $uri');
+      print('Category: "$kategori", stockFilter: "$stockFilter"');
+
       final response = await http.get(uri, headers: _getHeaders(token));
+
+      print('Incoming Items by Category API response status: ${response.statusCode}');
+      print('Incoming Items by Category API response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -192,9 +204,13 @@ class IncomingItemsApiService {
       }
 
       final queryParams = <String, String>{
-        'q': query,
         'per_page': perPage.toString(),
       };
+
+      // Only add search query if not empty
+      if (query.isNotEmpty) {
+        queryParams['q'] = query;
+      }
 
       if (kategori != null && kategori.isNotEmpty) {
         queryParams['kategori'] = kategori;
@@ -207,7 +223,13 @@ class IncomingItemsApiService {
         queryParameters: queryParams,
       );
 
+      print('Incoming Items Search API request: $uri');
+      print('Search query: "$query", kategori: "$kategori", stockFilter: "$stockFilter"');
+
       final response = await http.get(uri, headers: _getHeaders(token));
+
+      print('Incoming Items Search API response status: ${response.statusCode}');
+      print('Incoming Items Search API response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);

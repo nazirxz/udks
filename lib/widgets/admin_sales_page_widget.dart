@@ -20,12 +20,20 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
   String selectedCategory = 'Semua Kategori';
   String searchQuery = '';
   Timer? _searchTimer;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadSalesData();
     _loadCategories();
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCategories() async {
@@ -184,6 +192,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     // Cancel previous search timer
     _searchTimer?.cancel();
     
+    // Update state immediately for UI responsiveness
     if (mounted) {
       setState(() {
         selectedCategory = category;
@@ -191,7 +200,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
       });
     }
     
-    // If query is empty, load immediately
+    // If query is empty, load immediately without debounce
     if (query.isEmpty) {
       if (mounted) {
         setState(() {
@@ -202,21 +211,19 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
       return;
     }
     
-    // Debounce search for 500ms
-    _searchTimer = Timer(const Duration(milliseconds: 500), () async {
+    // Set the search query immediately for UI state
+    if (mounted) {
+      setState(() {
+        searchQuery = query;
+      });
+    }
+    
+    // Debounce search for 800ms to prevent excessive API calls
+    _searchTimer = Timer(const Duration(milliseconds: 800), () async {
       if (mounted) {
-        setState(() {
-          searchQuery = query;
-        });
         await _loadSalesData();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _searchTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _handleViewDetail(int id) async {
@@ -506,6 +513,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
               children: [
                 // Search field
                 TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Cari nama barang, tujuan distribusi...',
                     prefixIcon: const Icon(Icons.search),
@@ -547,7 +555,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                   }).toList(),
                   onChanged: (value) async {
                     if (value != null) {
-                      await _handleOrderSearch(searchQuery, value);
+                      await _handleOrderSearch(_searchController.text, value);
                     }
                   },
                 ),
