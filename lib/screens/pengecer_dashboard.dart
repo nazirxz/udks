@@ -552,7 +552,7 @@ class _PengecerDashboardState extends State<PengecerDashboard> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Pilih produk untuk dijual kepada pelanggan',
+                    'Silahkan Pilih Produk yang ingin Anda beli',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.white70,
