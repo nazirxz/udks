@@ -1,147 +1,63 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
-import 'forgot_password_screen.dart';
-import 'otp_verification_screen.dart';
 import '../services/auth_service.dart';
-import '../models/user.dart';
-import 'admin_dashboard.dart';
-import 'sales_dashboard.dart';
-import 'pengecer_dashboard.dart';
-import 'manager_dashboard.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  final String token;
+  final String email;
+
+  const ResetPasswordScreen({
+    super.key,
+    required this.token,
+    required this.email,
+  });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
-  bool _isCheckingAutoLogin = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAutoLogin();
-  }
 
   @override
   void dispose() {
-    _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _checkAutoLogin() async {
-    try {
-      final user = await _authService.getUserFromApi();
-      if (user != null && mounted) {
-        _navigateToUserDashboard(user);
-        return;
-      }
-    } catch (e) {
-      // Error is ignored as it is not critical
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCheckingAutoLogin = false;
-        });
-      }
-    }
-  }
-
-  void _navigateToUserDashboard(User user) {
-    Widget destination;
-    switch (user.role.toLowerCase()) {
-      case 'admin':
-        destination = AdminDashboard(user: user);
-        break;
-      case 'sales':
-        destination = SalesDashboard(user: user);
-        break;
-      case 'pengecer':
-        destination = PengecerDashboard(user: user);
-        break;
-      case 'manager':
-        destination = ManagerDashboard(user: user);
-        break;
-      default:
-        destination = AdminDashboard(user: user);
-    }
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => destination),
-      );
-    }
-  }
-
-  Future<void> _handleLogin() async {
+  Future<void> _handleResetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        final result = await _authService.login(
-          email: _emailController.text.trim(),
+        final result = await _authService.resetPassword(
+          token: widget.token,
+          email: widget.email,
           password: _passwordController.text.trim(),
+          passwordConfirmation: _confirmPasswordController.text.trim(),
         );
 
-        if (result['success'] && mounted) {
-          final user = await _authService.getUserFromApi();
-          if (user != null && mounted) {
-            _navigateToUserDashboard(user);
-          } else if (mounted) {
+        if (mounted) {
+          if (result['success']) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Failed to get user data.'),
-                backgroundColor: Colors.red,
+                content: Text('Password berhasil direset! Silakan login dengan password baru.'),
+                backgroundColor: Colors.green,
               ),
             );
-          }
-        } else if (mounted) {
-          final errorMessage = result['message'] ?? 'Login failed!';
-          
-          // Check if email verification is required
-          if (result['requires_verification'] == true && result['email'] != null) {
-            // Show dialog asking if user wants to verify email
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Email Belum Diverifikasi'),
-                content: const Text('Email Anda belum diverifikasi. Apakah Anda ingin melakukan verifikasi sekarang?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Nanti'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OTPVerificationScreen(email: result['email']),
-                        ),
-                      );
-                    },
-                    child: const Text('Verifikasi'),
-                  ),
-                ],
-              ),
-            );
+            Navigator.of(context).popUntil((route) => route.isFirst);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(errorMessage),
+                content: Text(result['message'] ?? 'Gagal mereset password'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -151,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed. ${e.toString().contains('email not verified') ? 'Please verify your email first.' : 'Please check your credentials.'}'),
+              content: Text('Terjadi kesalahan: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -168,13 +84,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingAutoLogin) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Reset Password'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.white,
+      ),
+      extendBodyBehindAppBar: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -219,11 +136,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 20),
                         const Text(
-                          "UD KELUARGA SEHATI",
+                          "RESET PASSWORD",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Masukkan password baru untuk\n${widget.email}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -249,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Login',
+                                  'Password Baru',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -257,28 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 TextFormField(
-                                  controller: _emailController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email',
-                                    prefixIcon: Icon(Icons.email),
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your email';
-                                    }
-                                    if (!value.contains('@')) {
-                                      return 'Please enter a valid email';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 20),
-                                TextFormField(
                                   controller: _passwordController,
                                   obscureText: _obscurePassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Password',
+                                    labelText: 'Password Baru',
                                     prefixIcon: const Icon(Icons.lock),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -294,37 +202,50 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Please enter your password';
+                                      return 'Masukkan password baru';
+                                    }
+                                    if (value.length < 8) {
+                                      return 'Password minimal 8 karakter';
                                     }
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 15),
-                                // Forgot password link
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Lupa Password?',
-                                      style: TextStyle(
-                                        color: Color(0xFF2a5298),
-                                        fontWeight: FontWeight.w500,
+                                const SizedBox(height: 20),
+                                TextFormField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: _obscureConfirmPassword,
+                                  decoration: InputDecoration(
+                                    labelText: 'Konfirmasi Password',
+                                    prefixIcon: const Icon(Icons.lock_outline),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                                       ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                                        });
+                                      },
                                     ),
+                                    border: const OutlineInputBorder(),
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Konfirmasi password Anda';
+                                    }
+                                    if (value != _passwordController.text) {
+                                      return 'Password tidak cocok';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                const SizedBox(height: 15),
+                                const SizedBox(height: 30),
                                 _isLoading
                                     ? const Center(child: CircularProgressIndicator())
                                     : SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton(
-                                          onPressed: _handleLogin,
+                                          onPressed: _handleResetPassword,
                                           style: ElevatedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             shape: RoundedRectangleBorder(
@@ -332,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           child: const Text(
-                                            'Login',
+                                            'Reset Password',
                                             style: TextStyle(fontSize: 18),
                                           ),
                                         ),
@@ -342,15 +263,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Register link
+                        // Back to login link
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                            );
+                            Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                           child: const Text(
-                            'Belum punya akun? Daftar di sini',
+                            'Kembali ke Login',
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

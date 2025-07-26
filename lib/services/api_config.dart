@@ -31,6 +31,11 @@ class ApiConfig {
   static String get register => '$_baseUrl/register';
   static String get logout => '$_baseUrl/logout';
   static String get user => '$_baseUrl/user';
+  static String get sendOtp => '$_baseUrl/send-otp';
+  static String get verifyOtp => '$_baseUrl/verify-otp';
+  static String get resendOtp => '$_baseUrl/resend-otp';
+  static String get forgotPassword => '$_baseUrl/forgot-password';
+  static String get resetPassword => '$_baseUrl/reset-password';
   
   // Outgoing items endpoints
   static String get outgoingItems => '$_baseUrl/outgoing-items';

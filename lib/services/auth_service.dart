@@ -29,6 +29,94 @@ class AuthService {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> sendOtp({
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.sendOtp),
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'email': email,
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.verifyOtp),
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> resendOtp({
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.resendOtp),
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'email': email,
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.forgotPassword),
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'email': email,
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.resetPassword),
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'token': token,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
