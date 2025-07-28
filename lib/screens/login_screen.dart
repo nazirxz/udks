@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (mounted) {
           final errorMessage = result['message'] ?? 'Login failed!';
           
-          // Check if email verification is required
+          // Check if email verification is required (only for unverified accounts)
           if (result['requires_verification'] == true && result['email'] != null) {
             // Show dialog asking if user wants to verify email
             showDialog(

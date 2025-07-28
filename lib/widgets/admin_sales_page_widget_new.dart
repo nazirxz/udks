@@ -170,75 +170,14 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         });
       }
     } catch (e) {
-      // Fallback demo data for testing
-      const fallbackItems = [
-        {
-          'id': 1,
-          'pengecer_name': 'Toko Komputer ABC',
-          'order_number': 'ORD-20250725-001',
-          'shipping_address': 'Jl. Sudirman No. 123',
-          'city': 'Pekanbaru',
-          'latitude': '0.50849350',
-          'longitude': '101.40897630',
-          'total_amount': '165000.00',
-          'order_status': 'pending',
-          'created_at': '2025-07-25T04:00:10.000000Z',
-          'order_items': [
-            {'product_name': 'Laptop ASUS ROG', 'quantity': 2}
-          ],
-        },
-        {
-          'id': 2,
-          'pengecer_name': 'Gaming Store XYZ',
-          'order_number': 'ORD-20250724-001',
-          'shipping_address': 'Jl. Ahmad Yani No. 456',
-          'city': 'Pekanbaru',
-          'latitude': '0.56751920',
-          'longitude': '101.42727980',
-          'total_amount': '27500.00',
-          'order_status': 'delivered',
-          'created_at': '2025-07-24T07:15:52.000000Z',
-          'order_items': [
-            {'product_name': 'Mouse Gaming Logitech', 'quantity': 5}
-          ],
-        },
-      ];
-      
-      // Filter fallback data based on search query
-      List<Map<String, dynamic>> filteredFallback = fallbackItems;
-      
-      if (searchQuery.isNotEmpty) {
-        filteredFallback = fallbackItems.where((item) {
-          final pengecer = item['pengecer_name'].toString().toLowerCase();
-          final address = item['shipping_address'].toString().toLowerCase();
-          final query = searchQuery.toLowerCase();
-          return pengecer.contains(query) || address.contains(query);
-        }).toList();
-      }
-      
       if (mounted) {
         setState(() {
-          orderData = filteredFallback;
-          filteredOrderData = filteredFallback;
+          orderData = [];
+          filteredOrderData = [];
           currentPage = 1;
           totalPages = 1;
           isLoading = false;
         });
-        
-        _updateMapMarkers();
-      }
-      
-      if (mounted) {
-        String message = searchQuery.isNotEmpty 
-            ? 'Menggunakan data demo untuk pencarian: "$searchQuery"'
-            : 'Menggunakan data demo: $e';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     }
   }
@@ -638,75 +577,100 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                     DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
-                  rows: filteredOrderData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${index + 1}')),
-                        DataCell(
-                          Text(
-                            item['order_number'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            item['pengecer_name'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            item['shipping_address'] ?? '',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Rp ${_formatCurrency(item['total_amount']?.toString() ?? '0')}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(item['order_status']).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['order_status'] ?? '',
-                              style: TextStyle(
-                                color: _getStatusColor(item['order_status']),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                                onPressed: () => _showOrderDetail(item),
-                                tooltip: 'Lihat Detail',
-                              ),
-                              if (item['latitude'] != null && item['longitude'] != null)
-                                IconButton(
-                                  icon: const Icon(Icons.location_on, color: Colors.red, size: 20),
-                                  onPressed: () => _showLocationDialog(item),
-                                  tooltip: 'Lihat Lokasi',
+                  rows: filteredOrderData.isEmpty 
+                    ? [
+                        const DataRow(
+                          cells: [
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  'Data kosong',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
+                              ),
+                            ),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                          ],
+                        )
+                      ]
+                    : filteredOrderData.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        
+                        return DataRow(
+                          cells: [
+                            DataCell(Text('${index + 1}')),
+                            DataCell(
+                              Text(
+                                item['order_number'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                item['pengecer_name'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                item['shipping_address'] ?? '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                'Rp ${_formatCurrency(item['total_amount']?.toString() ?? '0')}',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(item['order_status']).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  item['order_status'] ?? '',
+                                  style: TextStyle(
+                                    color: _getStatusColor(item['order_status']),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                                    onPressed: () => _showOrderDetail(item),
+                                    tooltip: 'Lihat Detail',
+                                  ),
+                                  if (item['latitude'] != null && item['longitude'] != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.location_on, color: Colors.red, size: 20),
+                                      onPressed: () => _showLocationDialog(item),
+                                      tooltip: 'Lihat Lokasi',
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                 ),
               ),
             ),

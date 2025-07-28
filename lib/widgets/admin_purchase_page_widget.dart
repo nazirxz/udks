@@ -40,10 +40,12 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
   }
 
   Future<void> _loadIncomingItems() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = '';
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = '';
+      });
+    }
 
     try {
 
@@ -59,43 +61,49 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
       // Load weekly stats
       final statsResult = await IncomingItemsApiService.getWeeklyIncomingStats();
 
-      setState(() {
-        if (itemsResult['success']) {
-          incomingItems = itemsResult['data'] ?? [];
-          filteredIncomingItems = List.from(incomingItems);
-          
-          final pagination = itemsResult['pagination'] ?? {};
-          currentPage = pagination['current_page'] ?? 1;
-          totalPages = pagination['last_page'] ?? 1;
-        } else {
-          errorMessage = itemsResult['message'];
-        }
+      if (mounted) {
+        setState(() {
+          if (itemsResult['success']) {
+            incomingItems = itemsResult['data'] ?? [];
+            filteredIncomingItems = List.from(incomingItems);
+            
+            final pagination = itemsResult['pagination'] ?? {};
+            currentPage = pagination['current_page'] ?? 1;
+            totalPages = pagination['last_page'] ?? 1;
+          } else {
+            errorMessage = itemsResult['message'];
+          }
 
-        if (categoriesResult['success']) {
-          final apiCategories = List<String>.from(categoriesResult['data']);
-          categories = ['Semua Kategori', ...apiCategories];
-        }
+          if (categoriesResult['success']) {
+            final apiCategories = List<String>.from(categoriesResult['data']);
+            categories = ['Semua Kategori', ...apiCategories];
+          }
 
-        if (statsResult['success']) {
-          weeklyStats = statsResult['data'] ?? {};
-        }
+          if (statsResult['success']) {
+            weeklyStats = statsResult['data'] ?? {};
+          }
 
-        isLoading = false;
-      });
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        errorMessage = 'Error loading data: $e';
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Error loading data: $e';
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _handleSearch(String query, String category) async {
-    setState(() {
-      searchQuery = query;
-      selectedCategory = category;
-      isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        searchQuery = query;
+        selectedCategory = category;
+        isLoading = true;
+      });
+    }
 
     try {
       if (query.isEmpty && category == 'Semua Kategori') {
@@ -131,26 +139,30 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
           );
         }
 
+        if (mounted) {
+          setState(() {
+            if (result['success']) {
+              filteredIncomingItems = result['data'] ?? [];
+              // Update pagination if available
+              final pagination = result['pagination'] ?? {};
+              currentPage = pagination['current_page'] ?? currentPage;
+              totalPages = pagination['last_page'] ?? totalPages;
+            } else {
+              errorMessage = result['message'] ?? 'Pencarian gagal';
+              filteredIncomingItems = [];
+            }
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          if (result['success']) {
-            filteredIncomingItems = result['data'] ?? [];
-            // Update pagination if available
-            final pagination = result['pagination'] ?? {};
-            currentPage = pagination['current_page'] ?? currentPage;
-            totalPages = pagination['last_page'] ?? totalPages;
-          } else {
-            errorMessage = result['message'] ?? 'Pencarian gagal';
-            filteredIncomingItems = [];
-          }
+          errorMessage = 'Error searching: $e';
+          filteredIncomingItems = [];
           isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error searching: $e';
-        filteredIncomingItems = [];
-        isLoading = false;
-      });
     }
   }
 

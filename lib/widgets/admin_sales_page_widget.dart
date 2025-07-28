@@ -155,228 +155,14 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
         });
       }
     } catch (e) {
-      // Fallback demo data - using exact structure from your API response
-      final fallbackItems = [
-        {
-          'id': 4,
-          'user_id': '9',
-          'order_number': 'ORD-20250725-0001',
-          'pengecer_name': 'pengecer',
-          'pengecer_phone': '4349843449',
-          'pengecer_email': 'pengecer@gmail.com',
-          'shipping_address': 'gahwjwgehej',
-          'city': 'hwhwjwh',
-          'postal_code': '69494',
-          'latitude': '0.50849350',
-          'longitude': '101.40897630',
-          'location_address': 'gahwjwgehej (0.508494, 101.408976)',
-          'location_accuracy': '26.27',
-          'subtotal': '150000.00',
-          'shipping_cost': '0.00',
-          'tax_amount': '15000.00',
-          'discount_amount': '0.00',
-          'total_amount': '165000.00',
-          'shipping_method': 'Free Delivery',
-          'payment_method': 'Cash on Delivery',
-          'payment_status': 'pending',
-          'voucher_code': null,
-          'voucher_discount': '0.00',
-          'order_status': 'pending',
-          'notes': null,
-          'created_at': '2025-07-25T04:00:10.000000Z',
-          'updated_at': '2025-07-25T04:00:10.000000Z',
-          'delivered_at': null,
-          'delivery_photo': null,
-          'delivery_notes': null,
-          'order_items': [
-            {
-              'id': 4,
-              'order_id': '4',
-              'product_name': 'Fanta',
-              'product_image': 'images/fanta.png',
-              'quantity': 30,
-              'unit': 'pcs',
-              'unit_price': '5000.00',
-              'total_price': '150000.00'
-            }
-          ],
-        },
-        {
-          'id': 3,
-          'user_id': '9',
-          'order_number': 'ORD-20250724-0001',
-          'pengecer_name': 'pengecer',
-          'pengecer_phone': '08123456789',
-          'pengecer_email': 'pengecer@gmail.com',
-          'shipping_address': 'jl.ahajshsgsha',
-          'city': 'kahshsh',
-          'postal_code': '12645',
-          'latitude': '0.56751920',
-          'longitude': '101.42727980',
-          'location_address': 'jl.ahajshsgsha (0.567519, 101.427280)',
-          'location_accuracy': '30.00',
-          'subtotal': '25000.00',
-          'shipping_cost': '0.00',
-          'tax_amount': '2500.00',
-          'discount_amount': '0.00',
-          'total_amount': '27500.00',
-          'shipping_method': 'Free Delivery',
-          'payment_method': 'Bank Transfer',
-          'payment_status': 'pending',
-          'voucher_code': null,
-          'voucher_discount': '0.00',
-          'order_status': 'pending',
-          'notes': 'ahsnssg',
-          'created_at': '2025-07-24T07:15:52.000000Z',
-          'updated_at': '2025-07-24T07:15:52.000000Z',
-          'delivered_at': null,
-          'delivery_photo': null,
-          'delivery_notes': null,
-          'order_items': [
-            {
-              'id': 3,
-              'order_id': '3',
-              'product_name': 'Fanta',
-              'product_image': 'images/fanta.png',
-              'quantity': 5,
-              'unit': 'pcs',
-              'unit_price': '5000.00',
-              'total_price': '25000.00'
-            }
-          ],
-        },
-        {
-          'id': 2,
-          'user_id': '9',
-          'order_number': 'ORD-20250723-0001',
-          'pengecer_name': 'pengecer_1',
-          'pengecer_phone': '082166543955',
-          'pengecer_email': 'pengecer@gmail.com',
-          'shipping_address': 'jl bukit sari',
-          'city': '2826501',
-          'postal_code': '28265',
-          'latitude': '0.46558915',
-          'longitude': '101.41074881',
-          'location_address': 'jl bukit sari (0.465589, 101.410749)',
-          'location_accuracy': '1.00',
-          'subtotal': '9000.00',
-          'shipping_cost': '0.00',
-          'tax_amount': '900.00',
-          'discount_amount': '0.00',
-          'total_amount': '9900.00',
-          'shipping_method': 'Free Delivery',
-          'payment_method': 'Cash on Delivery',
-          'payment_status': 'pending',
-          'voucher_code': null,
-          'voucher_discount': '0.00',
-          'order_status': 'pending',
-          'notes': null,
-          'created_at': '2025-07-23T14:24:11.000000Z',
-          'updated_at': '2025-07-23T14:24:11.000000Z',
-          'delivered_at': null,
-          'delivery_photo': null,
-          'delivery_notes': null,
-          'order_items': [
-            {
-              'id': 2,
-              'order_id': '2',
-              'product_name': 'Bear Brand',
-              'product_image': 'images/bear-brand.png',
-              'quantity': 1,
-              'unit': 'pcs',
-              'unit_price': '9000.00',
-              'total_price': '9000.00'
-            }
-          ],
-        },
-        {
-          'id': 1,
-          'user_id': '9',
-          'order_number': 'ORD-20250722-0001',
-          'pengecer_name': 'pengecer_1',
-          'pengecer_phone': '0822151558',
-          'pengecer_email': 'pengecer@gmail.com',
-          'shipping_address': 'whhwh2',
-          'city': 'pekanbatu',
-          'postal_code': '28265',
-          'latitude': '0.45720215',
-          'longitude': '101.43061794',
-          'location_address': 'whhwh2 (0.457202, 101.430618)',
-          'location_accuracy': '1.00',
-          'subtotal': '90000.00',
-          'shipping_cost': '0.00',
-          'tax_amount': '9000.00',
-          'discount_amount': '0.00',
-          'total_amount': '99000.00',
-          'shipping_method': 'Free Delivery',
-          'payment_method': 'Cash on Delivery',
-          'payment_status': 'pending',
-          'voucher_code': null,
-          'voucher_discount': '0.00',
-          'order_status': 'delivered',
-          'notes': null,
-          'created_at': '2025-07-22T14:36:06.000000Z',
-          'updated_at': '2025-07-23T13:58:55.000000Z',
-          'delivered_at': '2025-07-23T20:58:55.000000Z',
-          'delivery_photo': null,
-          'delivery_notes': null,
-          'order_items': [
-            {
-              'id': 1,
-              'order_id': '1',
-              'product_name': 'Bear Brand',
-              'product_image': 'images/bear-brand.png',
-              'quantity': 10,
-              'unit': 'pcs',
-              'unit_price': '9000.00',
-              'total_price': '90000.00'
-            }
-          ],
-        }
-      ];
-      
-      // Filter fallback data based on search query
-      List<Map<String, dynamic>> filteredFallback = List.from(fallbackItems);
-      
-      if (searchQuery.isNotEmpty) {
-        filteredFallback = fallbackItems.where((item) {
-          final pengecer = item['pengecer_name'].toString().toLowerCase();
-          final address = item['shipping_address'].toString().toLowerCase();
-          final query = searchQuery.toLowerCase();
-          return pengecer.contains(query) || address.contains(query);
-        }).toList();
-      }
-      
-      if (selectedCategory != 'Semua Status') {
-        filteredFallback = filteredFallback.where((item) {
-          final status = item['order_status'].toString().toLowerCase();
-          return status == selectedCategory.toLowerCase();
-        }).toList();
-      }
-      
       if (mounted) {
         setState(() {
-          orderData = filteredFallback;
-          filteredOrderData = filteredFallback;
+          orderData = [];
+          filteredOrderData = [];
           currentPage = 1;
           totalPages = 1;
           isLoading = false;
         });
-        
-        _updateMapMarkers();
-      }
-      
-      if (mounted) {
-        String message = searchQuery.isNotEmpty 
-            ? 'Menggunakan data demo untuk pencarian: "$searchQuery"'
-            : 'Menggunakan data demo: $e';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     }
   }
@@ -866,75 +652,100 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                     DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
-                  rows: filteredOrderData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${index + 1}')),
-                        DataCell(
-                          Text(
-                            item['order_number'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            item['pengecer_name'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            item['shipping_address'] ?? '',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Rp ${_formatCurrency(item['total_amount']?.toString() ?? '0')}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(item['order_status']).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['order_status'] ?? '',
-                              style: TextStyle(
-                                color: _getStatusColor(item['order_status']),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                                onPressed: () => _showOrderDetail(item),
-                                tooltip: 'Lihat Detail',
-                              ),
-                              if (item['latitude'] != null && item['longitude'] != null)
-                                IconButton(
-                                  icon: const Icon(Icons.location_on, color: Colors.red, size: 20),
-                                  onPressed: () => _showLocationDialog(item),
-                                  tooltip: 'Lihat Lokasi',
+                  rows: filteredOrderData.isEmpty 
+                    ? [
+                        const DataRow(
+                          cells: [
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  'Data kosong',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
+                              ),
+                            ),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                          ],
+                        )
+                      ]
+                    : filteredOrderData.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        
+                        return DataRow(
+                          cells: [
+                            DataCell(Text('${index + 1}')),
+                            DataCell(
+                              Text(
+                                item['order_number'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                item['pengecer_name'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                item['shipping_address'] ?? '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                'Rp ${_formatCurrency(item['total_amount']?.toString() ?? '0')}',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(item['order_status']).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  item['order_status'] ?? '',
+                                  style: TextStyle(
+                                    color: _getStatusColor(item['order_status']),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                                    onPressed: () => _showOrderDetail(item),
+                                    tooltip: 'Lihat Detail',
+                                  ),
+                                  if (item['latitude'] != null && item['longitude'] != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.location_on, color: Colors.red, size: 20),
+                                      onPressed: () => _showLocationDialog(item),
+                                      tooltip: 'Lihat Lokasi',
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                 ),
               ),
             ),
