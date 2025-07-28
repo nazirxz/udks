@@ -344,55 +344,89 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
     }
   }
 
-  Future<void> _handleDelete(int id) async {
-    // Show loading indicator
+  void _handleViewDetail(int id) {
+    // Find the item by id
+    final item = filteredReturnData.firstWhere(
+      (element) => element['id'] == id,
+      orElse: () => {},
+    );
+    
+    if (item.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data tidak ditemukan'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.assignment_return, color: Colors.red.shade600),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Detail Return Barang',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailItem('ID', item['id']?.toString() ?? '-'),
+                _buildDetailItem('Nama Barang', item['nama_barang']?.toString() ?? '-'),
+                _buildDetailItem('Kategori Barang', item['kategori_barang']?.toString() ?? '-'),
+                _buildDetailItem('Jumlah Barang', '${item['jumlah_barang']?.toString() ?? '0'} pcs'),
+                _buildDetailItem('Nama Produsen', item['nama_produsen']?.toString() ?? '-'),
+                _buildDetailItem('Alasan Pengembalian', item['alasan_pengembalian']?.toString() ?? '-'),
+                _buildDetailItem('Tanggal Pengembalian', _formatDate(item['tanggal_pengembalian'])),
+                _buildDetailItem('Waktu Pengembalian', _formatDateTime(item['waktu_pengembalian'])),
+                _buildDetailItem('Status Pengembalian', item['status_pengembalian']?.toString() ?? '-'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Tutup'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
       ),
     );
-
-    try {
-      // For now, just simulate delete operation
-      // In a real implementation, you would call an API to delete the item
-      await Future.delayed(const Duration(seconds: 1));
-      const success = true;
-      
-      // Close loading dialog
-      if (mounted) Navigator.of(context).pop();
-      
-      if (success) {
-        setState(() {
-          returnData.removeWhere((item) => item['id'] == id);
-          filteredReturnData.removeWhere((item) => item['id'] == id);
-        });
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Data berhasil dihapus'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (mounted) Navigator.of(context).pop();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -561,47 +595,75 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
                     DataColumn(label: Text('Status Pengembalian', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
-                  rows: filteredReturnData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${index + 1}')),
-                        DataCell(Text(item['nama_barang'] ?? '')),
-                        DataCell(Text(item['kategori_barang'] ?? '')),
-                        DataCell(Text('${item['jumlah_barang']} pcs')),
-                        DataCell(Text(item['nama_produsen'] ?? '')),
-                        DataCell(Text(item['alasan_pengembalian'] ?? '')),
-                        DataCell(Text(_formatDate(item['tanggal_pengembalian']))),
-                        DataCell(Text(_formatDateTime(item['waktu_pengembalian']))),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(item['status_pengembalian']).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['status_pengembalian'] ?? '',
-                              style: TextStyle(
-                                color: _getStatusColor(item['status_pengembalian']),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                  rows: filteredReturnData.isEmpty 
+                    ? [
+                        const DataRow(
+                          cells: [
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  'Data kosong',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        DataCell(
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                            onPressed: () => _showDeleteConfirmation(item['id']),
-                            tooltip: 'Hapus',
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                            DataCell(Text('')),
+                          ],
+                        )
+                      ]
+                    : filteredReturnData.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        
+                        return DataRow(
+                          cells: [
+                            DataCell(Text('${index + 1}')),
+                            DataCell(Text(item['nama_barang'] ?? '')),
+                            DataCell(Text(item['kategori_barang'] ?? '')),
+                            DataCell(Text('${item['jumlah_barang']} pcs')),
+                            DataCell(Text(item['nama_produsen'] ?? '')),
+                            DataCell(Text(item['alasan_pengembalian'] ?? '')),
+                            DataCell(Text(_formatDate(item['tanggal_pengembalian']))),
+                            DataCell(Text(_formatDateTime(item['waktu_pengembalian']))),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(item['status_pengembalian']).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  item['status_pengembalian'] ?? '',
+                                  style: TextStyle(
+                                    color: _getStatusColor(item['status_pengembalian']),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                                onPressed: () => _handleViewDetail(item['id']),
+                                tooltip: 'Lihat Detail',
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                 ),
               ),
             ),
@@ -787,29 +849,4 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
     }
   }
 
-  void _showDeleteConfirmation(int id) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Hapus'),
-          content: const Text('Apakah Anda yakin ingin menghapus data ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _handleDelete(id);
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

@@ -1,8 +1,7 @@
 // lib/widgets/admin_sales_page_widget.dart
 import 'package:flutter/material.dart';
-import '../services/sales_order_api_service.dart';
+import '../services/outgoing_items_service.dart';
 import 'dart:async';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class AdminSalesPageWidget extends StatefulWidget {
   const AdminSalesPageWidget({super.key});
@@ -12,25 +11,16 @@ class AdminSalesPageWidget extends StatefulWidget {
 }
 
 class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
-  List<Map<String, dynamic>> orderData = [];
-  List<Map<String, dynamic>> filteredOrderData = [];
-  List<String> categories = ['Semua Status'];
+  List<Map<String, dynamic>> salesData = [];
+  List<Map<String, dynamic>> filteredSalesData = [];
+  List<String> categories = ['Semua Kategori'];
   bool isLoading = true;
   int currentPage = 1;
   int totalPages = 1;
-  String selectedCategory = 'Semua Status';
+  String selectedCategory = 'Semua Kategori';
   String searchQuery = '';
   Timer? _searchTimer;
   final TextEditingController _searchController = TextEditingController();
-  
-  // Map related variables
-  GoogleMapController? mapController;
-  Set<Marker> markers = {};
-  bool showMap = false;
-  static const CameraPosition _initialPosition = CameraPosition(
-    target: LatLng(0.5, 101.4), // Default position (Pekanbaru area)
-    zoom: 10,
-  );
 
   @override
   void initState() {
@@ -65,18 +55,19 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
 
   Future<void> _loadCategories() async {
     try {
-      // For sales orders, we don't need categories from products
-      // We use status-based filtering instead
+      // Get categories from API
+      final categoriesResponse = await OutgoingItemsService.getCategories();
       if (mounted) {
+        final List<dynamic> categoriesData = categoriesResponse['data'] ?? [];
         setState(() {
-          categories = ['Semua Status', 'Pending', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
+          categories = ['Semua Kategori'] + categoriesData.cast<String>();
         });
       }
     } catch (e) {
-      // Fallback categories for demo/testing
+      // Empty fallback categories
       if (mounted) {
         setState(() {
-          categories = ['Semua Status', 'Pending', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
+          categories = ['Semua Kategori'];
         });
       }
     }
@@ -90,55 +81,22 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     }
 
     try {
-      Map<String, dynamic> response;
-      
-      // Use search API if there's a search query, otherwise use regular get items
-      if (searchQuery.isNotEmpty) {
-        response = await SalesOrderApiService.getSalesOrders(
-          search: searchQuery,
-          status: selectedCategory != 'Semua Status' ? selectedCategory.toLowerCase() : null,
-        );
-      } else {
-        response = await SalesOrderApiService.getSalesOrders(
-          status: selectedCategory != 'Semua Status' ? selectedCategory.toLowerCase() : null,
-        );
-      }
+      // Get outgoing items data using the same service as manager
+      final response = await OutgoingItemsService.getOutgoingItems(
+        page: currentPage,
+        kategori: selectedCategory != 'Semua Kategori' ? selectedCategory : null,
+        search: searchQuery.isNotEmpty ? searchQuery : null,
+      );
 
-      if (response['success'] == true) {
-        // Handle sales orders response
-        final salesOrders = response['data'] as List<dynamic>;
-        
-        // Convert SalesOrder objects to Map format for compatibility
-        final List<Map<String, dynamic>> orderMaps = salesOrders.map((order) {
-          // Handle both SalesOrder objects and Map data
-          if (order is Map<String, dynamic>) {
-            return order;
-          } else {
-            // If it's a SalesOrder object, convert to map
-            return {
-              'id': order.id,
-              'order_number': order.orderNumber,
-              'pengecer_name': order.pengecerName,
-              'shipping_address': order.shippingAddress,
-              'city': order.city,
-              'latitude': order.latitude?.toString(),
-              'longitude': order.longitude?.toString(),
-              'total_amount': order.totalAmount?.toString(),
-              'order_status': order.orderStatus,
-              'created_at': order.createdAt?.toIso8601String(),
-              'order_items': order.orderItems?.map((item) => {
-                'product_name': item.productName,
-                'quantity': item.quantity,
-                'unit': item.unit,
-              }).toList(),
-            };
-          }
-        }).toList();
+      if (response['data'] != null) {
+        // Use the same simple format as manager
+        final List<Map<String, dynamic>> salesMaps = List<Map<String, dynamic>>.from(response['data'] ?? []);
         
         if (mounted) {
           setState(() {
-            orderData = orderMaps;
-            filteredOrderData = orderMaps;
+            salesData = salesMaps;
+            filteredSalesData = salesMaps;
+            totalPages = response['total_pages'] ?? 1;
             isLoading = false;
           });
           
@@ -146,23 +104,25 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
           _updateMapMarkers();
         }
       } else {
-        throw Exception('Failed to load data');
-      }
-
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        throw Exception('Failed to load data - no data field in response');
       }
     } catch (e) {
+      print('Error loading sales data: $e');
       if (mounted) {
         setState(() {
-          orderData = [];
-          filteredOrderData = [];
+          salesData = [];
+          filteredSalesData = [];
           currentPage = 1;
           totalPages = 1;
           isLoading = false;
         });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -182,91 +142,22 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
   }
 
   void _updateMapMarkers() {
-    markers.clear();
-    
-    // Only show map if there's a search query and results with location data
-    bool hasLocationData = false;
-    
-    for (int i = 0; i < filteredOrderData.length; i++) {
-      final order = filteredOrderData[i];
-      final lat = order['latitude'];
-      final lng = order['longitude'];
-      
-      if (lat != null && lng != null) {
-        try {
-          final latitude = double.parse(lat.toString());
-          final longitude = double.parse(lng.toString());
-          hasLocationData = true;
-          
-          markers.add(
-            Marker(
-              markerId: MarkerId('order_${order['id']}'),
-              position: LatLng(latitude, longitude),
-              infoWindow: InfoWindow(
-                title: order['pengecer_name'] ?? 'Pengecer',
-                snippet: '${order['shipping_address'] ?? ''}\nOrder: ${order['order_number'] ?? ''}',
-              ),
-              onTap: () => _showOrderDetail(order),
-            ),
-          );
-        } catch (e) {
-          debugPrint('Error parsing coordinates for order ${order['id']}: $e');
-        }
-      }
-    }
-    
-    if (mounted) {
-      setState(() {
-        // Show map when there are search results with location data or when we have filtered results
-        showMap = hasLocationData && markers.isNotEmpty && 
-                 (searchQuery.isNotEmpty || selectedCategory != 'Semua Status');
-      });
-    }
-    
-    // Update map camera to show all markers
-    if (markers.isNotEmpty && mapController != null) {
-      _fitMarkersOnMap();
-    }
+    // Remove map functionality for admin sales data
+    // Admin sales focuses on sold items data, not location tracking
   }
 
-  void _fitMarkersOnMap() {
-    if (markers.isEmpty || mapController == null) return;
-    
-    double minLat = markers.first.position.latitude;
-    double maxLat = markers.first.position.latitude;
-    double minLng = markers.first.position.longitude;
-    double maxLng = markers.first.position.longitude;
-    
-    for (Marker marker in markers) {
-      minLat = marker.position.latitude < minLat ? marker.position.latitude : minLat;
-      maxLat = marker.position.latitude > maxLat ? marker.position.latitude : maxLat;
-      minLng = marker.position.longitude < minLng ? marker.position.longitude : minLng;
-      maxLng = marker.position.longitude > maxLng ? marker.position.longitude : maxLng;
-    }
-    
-    mapController!.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: LatLng(minLat, minLng),
-          northeast: LatLng(maxLat, maxLng),
-        ),
-        100.0, // padding
-      ),
-    );
-  }
-
-  void _showOrderDetail(Map<String, dynamic> orderData) {
+  void _showItemDetail(Map<String, dynamic> item) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.location_on, color: Colors.red.shade600),
+              Icon(Icons.info_outline, color: Colors.blue.shade600),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'Detail Pesanan',
+                  'Detail Barang Terjual',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -277,46 +168,63 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildDetailItem('Order Number', orderData['order_number']?.toString() ?? '-'),
-                _buildDetailItem('Pengecer', orderData['pengecer_name']?.toString() ?? '-'),
-                _buildDetailItem('Alamat', orderData['shipping_address']?.toString() ?? '-'),
-                _buildDetailItem('Kota', orderData['city']?.toString() ?? '-'),
-                _buildDetailItem('Total', 'Rp ${_formatCurrency(orderData['total_amount']?.toString() ?? '0')}'),
-                _buildDetailItem('Status', orderData['order_status']?.toString() ?? '-'),
-                _buildDetailItem('Lokasi', '${orderData['latitude']}, ${orderData['longitude']}'),
+                _buildDetailItem('ID', item['id']?.toString() ?? '-'),
+                _buildDetailItem('Nama Barang', item['nama_barang']?.toString() ?? '-'),
+                _buildDetailItem('Kategori', item['kategori_barang']?.toString() ?? '-'),
+                _buildDetailItem('Jumlah', '${item['jumlah_barang']?.toString() ?? '0'} pcs'),
+                _buildDetailItem('Tanggal Keluar', _formatDate(item['tanggal_keluar_barang']?.toString() ?? '')),
+                _buildDetailItem('Tujuan Distribusi', item['tujuan_distribusi']?.toString() ?? '-'),
                 
-                if (orderData['order_items'] != null && orderData['order_items'].isNotEmpty)
+                // Show photo if available
+                if (item['foto_barang'] != null && item['foto_barang'].toString().isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
                       const Text(
-                        'Item Pesanan:',
+                        'Foto Barang:',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       const SizedBox(height: 8),
-                      ...orderData['order_items'].map<Widget>((item) => Container(
-                        margin: const EdgeInsets.only(bottom: 4),
-                        padding: const EdgeInsets.all(8),
+                      Container(
+                        width: double.infinity,
+                        height: 200,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item['product_name']?.toString() ?? '-',
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                            Text(
-                              '${item['quantity']} ${item['unit'] ?? 'pcs'}',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item['foto_barang'].toString(),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey.shade100,
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.broken_image, 
+                                           color: Colors.grey, size: 48),
+                                      Text('Gagal memuat gambar'),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey.shade100,
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      )).toList(),
+                      ),
                     ],
                   ),
               ],
@@ -357,17 +265,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
-  String _formatCurrency(String amount) {
-    try {
-      final double value = double.parse(amount);
-      return value.toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
-    } catch (e) {
-      return amount;
-    }
-  }
 
 
   @override
@@ -461,8 +358,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
             // Order Table
             _buildOrderTable(),
             
-            // Map View (show when search results have location data)
-            if (showMap) _buildMapView(),
+            // Map View removed - not needed for admin sales data
             
             // Bottom spacing for better UX
             const SizedBox(height: 20),
@@ -472,92 +368,6 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
-  Widget _buildMapView() {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.red.shade600),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lokasi Pengecer',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${markers.length} lokasi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: GoogleMap(
-                    initialCameraPosition: _initialPosition,
-                    markers: markers,
-                    onMapCreated: (GoogleMapController controller) {
-                      mapController = controller;
-                      // Fit markers after map is created
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        _fitMarkersOnMap();
-                      });
-                    },
-                    mapType: MapType.normal,
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Legend/Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Tap pada marker untuk melihat detail pesanan pengecer',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildOrderTable() {
     return Card(
@@ -569,7 +379,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Tabel Pesanan',
+              'Tabel Barang Terjual',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -585,7 +395,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Cari nama pengecer, alamat...',
+                    hintText: 'Cari nama barang, tujuan distribusi...',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -602,7 +412,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                   value: selectedCategory,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'Filter Status',
+                    labelText: 'Filter Kategori',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -645,14 +455,14 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                   headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
                   columns: const [
                     DataColumn(label: Text('No', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Order Number', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Pengecer', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Alamat', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Nama Barang', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Kategori', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Tanggal Keluar', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Tujuan Distribusi', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
-                  rows: filteredOrderData.isEmpty 
+                  rows: filteredSalesData.isEmpty 
                     ? [
                         const DataRow(
                           cells: [
@@ -677,7 +487,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                           ],
                         )
                       ]
-                    : filteredOrderData.asMap().entries.map((entry) {
+                    : filteredSalesData.asMap().entries.map((entry) {
                         final index = entry.key;
                         final item = entry.value;
                         
@@ -686,39 +496,21 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                             DataCell(Text('${index + 1}')),
                             DataCell(
                               Text(
-                                item['order_number'] ?? '',
+                                item['nama_barang'] ?? '',
                                 style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                item['pengecer_name'] ?? '',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                item['shipping_address'] ?? '',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                'Rp ${_formatCurrency(item['total_amount']?.toString() ?? '0')}',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
                             ),
                             DataCell(
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(item['order_status']).withValues(alpha: 0.1),
+                                  color: _getCategoryColor(item['kategori_barang']).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  item['order_status'] ?? '',
+                                  item['kategori_barang'] ?? '',
                                   style: TextStyle(
-                                    color: _getStatusColor(item['order_status']),
+                                    color: _getCategoryColor(item['kategori_barang']),
                                     fontWeight: FontWeight.w600,
                                     fontSize: 12,
                                   ),
@@ -726,21 +518,28 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
                               ),
                             ),
                             DataCell(
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                                    onPressed: () => _showOrderDetail(item),
-                                    tooltip: 'Lihat Detail',
-                                  ),
-                                  if (item['latitude'] != null && item['longitude'] != null)
-                                    IconButton(
-                                      icon: const Icon(Icons.location_on, color: Colors.red, size: 20),
-                                      onPressed: () => _showLocationDialog(item),
-                                      tooltip: 'Lihat Lokasi',
-                                    ),
-                                ],
+                              Text(
+                                _formatDate(item['tanggal_keluar_barang'] ?? ''),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                '${item['jumlah_barang']} pcs',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                item['tujuan_distribusi'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                                onPressed: () => _showItemDetail(item),
+                                tooltip: 'Lihat Detail',
                               ),
                             ),
                           ],
@@ -801,71 +600,40 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
     );
   }
 
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'delivered':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      case 'processing':
+  Color _getCategoryColor(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'elektronik':
         return Colors.blue;
+      case 'peralatan':
+        return Colors.green;
+      case 'makanan':
+        return Colors.orange;
+      case 'minuman':
+        return Colors.purple;
+      case 'pakaian':
+        return Colors.pink;
+      case 'obat-obatan':
+        return Colors.red;
       default:
         return Colors.grey;
     }
   }
 
-  void _showLocationDialog(Map<String, dynamic> orderData) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.location_on, color: Colors.red.shade600),
-              const SizedBox(width: 8),
-              const Text('Lokasi Pengecer'),
-            ],
-          ),
-          content: SizedBox(
-            width: 300,
-            height: 300,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                  double.parse(orderData['latitude'].toString()),
-                  double.parse(orderData['longitude'].toString()),
-                ),
-                zoom: 16,
-              ),
-              markers: {
-                Marker(
-                  markerId: MarkerId('location_${orderData['id']}'),
-                  position: LatLng(
-                    double.parse(orderData['latitude'].toString()),
-                    double.parse(orderData['longitude'].toString()),
-                  ),
-                  infoWindow: InfoWindow(
-                    title: orderData['pengecer_name'] ?? 'Pengecer',
-                    snippet: orderData['shipping_address'] ?? '',
-                  ),
-                ),
-              },
-              myLocationEnabled: false,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: true,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
-    );
+  String _formatDate(String dateString) {
+    try {
+      if (dateString.isEmpty) return '-';
+      
+      final DateTime date = DateTime.parse(dateString);
+      const List<String> months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      
+      return '${date.day} ${months[date.month - 1]} ${date.year}';
+    } catch (e) {
+      return dateString;
+    }
   }
+
 
 }

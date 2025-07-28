@@ -6,7 +6,7 @@ class AdminReturnTableWidget extends StatefulWidget {
   final List<String> categories;
   final List<String> returnReasons;
   final List<String> returnStatus;
-  final Function(int) onDelete;
+  final Function(int) onViewDetail;
   final Function(String, String, String, String) onSearch;
 
   const AdminReturnTableWidget({
@@ -15,7 +15,7 @@ class AdminReturnTableWidget extends StatefulWidget {
     required this.categories,
     required this.returnReasons,
     required this.returnStatus,
-    required this.onDelete,
+    required this.onViewDetail,
     required this.onSearch,
   }) : super(key: key);
 
@@ -400,9 +400,9 @@ class _AdminReturnTableWidgetState extends State<AdminReturnTableWidget> {
                 ),
                 DataCell(
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                    onPressed: () => _showDeleteConfirmation(item['id']),
-                    tooltip: 'Hapus',
+                    icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                    onPressed: () => widget.onViewDetail(item['id']),
+                    tooltip: 'Lihat Detail',
                   ),
                 ),
               ],
@@ -614,9 +614,9 @@ class _AdminReturnTableWidgetState extends State<AdminReturnTableWidget> {
                   Flexible(
                     flex: 1,
                     child: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red, size: 14),
-                      onPressed: () => _showDeleteConfirmation(item['id']),
-                      tooltip: 'Hapus',
+                      icon: const Icon(Icons.visibility, color: Colors.blue, size: 14),
+                      onPressed: () => widget.onViewDetail(item['id']),
+                      tooltip: 'Lihat Detail',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 24,
@@ -688,29 +688,4 @@ class _AdminReturnTableWidgetState extends State<AdminReturnTableWidget> {
     }
   }
 
-  void _showDeleteConfirmation(int id) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Hapus'),
-          content: const Text('Apakah Anda yakin ingin menghapus data ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                widget.onDelete(id);
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

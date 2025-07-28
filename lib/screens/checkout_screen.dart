@@ -62,7 +62,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     },
     {
       'title': 'Bank Transfer',
-      'subtitle': 'Transfer to our account',
+      'subtitle': 'BCA - 1234567890 (A.N: UD Keluarga Sehati)',
       'icon': Icons.account_balance,
     },
   ];
@@ -1368,7 +1368,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildPriceBreakdown(CartService cartService) {
     final subtotal = cartService.totalPrice;
     final shippingCost = _getSelectedShippingCost();
-    final tax = (subtotal * 0.1).round();
+    final tax = 0; // Tax removed for pengecer role
     final discount = _discountAmount;
     final total = subtotal + shippingCost + tax - discount;
 
@@ -1390,7 +1390,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
             _buildPriceRow('Subtotal', subtotal),
             _buildPriceRow('Ongkos Kirim', shippingCost),
-            _buildPriceRow('Pajak (10%)', tax),
             if (discount > 0) _buildPriceRow('Diskon', -discount, isDiscount: true),
             const Divider(height: 20),
             _buildPriceRow('Total', total, isTotal: true),
@@ -1604,7 +1603,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _calculateFinalTotal(CartService cartService) {
     final subtotal = cartService.totalPrice;
     final shippingCost = _getSelectedShippingCost();
-    final tax = (subtotal * 0.1).round();
+    final tax = 0; // Tax removed for pengecer role
     final discount = _discountAmount;
     return subtotal + shippingCost + tax - discount;
   }
