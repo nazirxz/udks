@@ -68,12 +68,11 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
             filteredIncomingItems = List.from(incomingItems);
             
             final pagination = itemsResult['pagination'] ?? {};
-            currentPage = pagination['current_page'] ?? 1;
-            totalPages = pagination['last_page'] ?? 1;
+            currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+            totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
           } else {
             errorMessage = itemsResult['message'];
           }
-
           if (categoriesResult['success']) {
             final apiCategories = List<String>.from(categoriesResult['data']);
             categories = ['Semua Kategori', ...apiCategories];
@@ -145,8 +144,8 @@ class _AdminPurchasePageWidgetState extends State<AdminPurchasePageWidget> {
               filteredIncomingItems = result['data'] ?? [];
               // Update pagination if available
               final pagination = result['pagination'] ?? {};
-              currentPage = pagination['current_page'] ?? currentPage;
-              totalPages = pagination['last_page'] ?? totalPages;
+              currentPage = int.tryParse(pagination['current_page'].toString()) ?? currentPage;
+              totalPages = int.tryParse(pagination['last_page'].toString()) ?? totalPages;
             } else {
               errorMessage = result['message'] ?? 'Pencarian gagal';
               filteredIncomingItems = [];

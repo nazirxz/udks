@@ -858,43 +858,44 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildAlertItem(Map<String, dynamic> alert) {
-    // For the complete endpoint response, items don't have status field
-    // We'll determine criticality based on stock amount (less than 15 = critical)
-    final stockAmount = alert['jumlah_barang'] ?? 0;
-    final isCritical = stockAmount < 15;
-    final color = isCritical ? Colors.red : Colors.orange;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(
-            isCritical ? Icons.error : Icons.warning,
-            color: color,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert['nama_barang'] ?? '',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  '${alert['kategori_barang'] ?? ''} - Stok: ${alert['jumlah_barang'] ?? 0}',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+    try {
+      // For the complete endpoint response, items don't have status field
+      // We'll determine criticality based on stock amount (less than 15 = critical)
+      final stockAmount = int.tryParse(alert['jumlah_barang']?.toString() ?? '0') ?? 0;
+      final isCritical = stockAmount < 15;
+      final color = isCritical ? Colors.red : Colors.orange;
+      
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(
+              isCritical ? Icons.error : Icons.warning,
+              color: color,
+              size: 20,
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    alert['nama_barang']?.toString() ?? 'Unknown Item',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    '${alert['kategori_barang']?.toString() ?? 'Unknown Category'} - Stok: $stockAmount',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -913,6 +914,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
     );
+    } catch (e) {
+      // Return error widget if parsing fails
+      print('Error parsing alert item: $e');
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 20),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Error loading item data',
+                style: TextStyle(color: Colors.red, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   String _formatCurrency(int amount) {

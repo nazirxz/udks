@@ -100,8 +100,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           // Check if there's more data
           final pagination = result['pagination'] as Map<String, dynamic>?;
           if (pagination != null) {
-            final currentPage = pagination['current_page'] ?? 1;
-            final lastPage = pagination['last_page'] ?? 1;
+            final currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+            final lastPage = int.tryParse(pagination['last_page'].toString()) ?? 1;
             _hasMoreData = currentPage < lastPage;
           } else {
             _hasMoreData = orders.length >= 10; // Default assumption
@@ -170,8 +170,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           // Check if there's more data
           final pagination = result['pagination'] as Map<String, dynamic>?;
           if (pagination != null) {
-            final currentPage = pagination['current_page'] ?? 1;
-            final lastPage = pagination['last_page'] ?? 1;
+            final currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+            final lastPage = int.tryParse(pagination['last_page'].toString()) ?? 1;
             _hasMoreData = currentPage < lastPage;
           } else {
             _hasMoreData = orders.length >= 10;
@@ -698,7 +698,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     [
                       _buildDetailRow('Subtotal', 'Rp ${order.formatCurrency(order.subtotal)}'),
                       _buildDetailRow('Ongkos Kirim', 'Rp ${order.formatCurrency(order.shippingCost)}'),
-                      _buildDetailRow('Pajak', 'Rp ${order.formatCurrency(order.taxAmount)}'),
                       if (order.discountAmount > 0)
                         _buildDetailRow('Diskon', '- Rp ${order.formatCurrency(order.discountAmount)}', 
                                        isDiscount: true),

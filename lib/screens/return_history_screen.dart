@@ -64,7 +64,7 @@ class _ReturnHistoryScreenState extends State<ReturnHistoryScreen> {
           } else {
             _returnItems.addAll(newItems);
           }
-          _hasMoreData = _currentPage < (pagination['last_page'] ?? 1);
+          _hasMoreData = _currentPage < (int.tryParse(pagination['last_page'].toString()) ?? 1);
           _currentPage++;
           _isLoading = false;
         });

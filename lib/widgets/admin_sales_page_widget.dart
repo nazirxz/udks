@@ -96,7 +96,7 @@ class _AdminSalesPageWidgetState extends State<AdminSalesPageWidget> {
           setState(() {
             salesData = salesMaps;
             filteredSalesData = salesMaps;
-            totalPages = response['total_pages'] ?? 1;
+            totalPages = int.tryParse(response['total_pages'].toString()) ?? 1;
             isLoading = false;
           });
           

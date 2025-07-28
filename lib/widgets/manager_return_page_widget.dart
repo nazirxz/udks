@@ -66,8 +66,8 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
           filteredReturnItems = List.from(returnItems);
           
           final pagination = itemsResult['pagination'] ?? {};
-          currentPage = pagination['current_page'] ?? 1;
-          totalPages = pagination['last_page'] ?? 1;
+          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
           
         } else {
           errorMessage = itemsResult['message'];
@@ -117,8 +117,8 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
           filteredReturnItems = List.from(returnItems);
           
           final pagination = result['pagination'] ?? {};
-          currentPage = pagination['current_page'] ?? 1;
-          totalPages = pagination['last_page'] ?? 1;
+          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
         });
       } else {
         setState(() {

@@ -64,8 +64,8 @@ class _ManagerPurchasePageWidgetState extends State<ManagerPurchasePageWidget> {
           filteredIncomingItems = List.from(incomingItems);
           
           final pagination = itemsResult['pagination'] ?? {};
-          currentPage = pagination['current_page'] ?? 1;
-          totalPages = pagination['last_page'] ?? 1;
+          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
           
         } else {
           errorMessage = itemsResult['message'];
@@ -113,8 +113,8 @@ class _ManagerPurchasePageWidgetState extends State<ManagerPurchasePageWidget> {
           filteredIncomingItems = List.from(incomingItems);
           
           final pagination = result['pagination'] ?? {};
-          currentPage = pagination['current_page'] ?? 1;
-          totalPages = pagination['last_page'] ?? 1;
+          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
+          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
         });
       } else {
         setState(() {

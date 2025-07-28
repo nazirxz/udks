@@ -58,7 +58,7 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
         final List<dynamic> categoriesData = categoriesResponse['data'] ?? [];
         categories = ['Semua Kategori'] + categoriesData.cast<String>();
         
-        totalPages = response['total_pages'] ?? 1;
+        totalPages = int.tryParse(response['total_pages'].toString()) ?? 1;
         
         // Convert stats to chart data format
         chartData = _convertStatsToChartData(stats);
