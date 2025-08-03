@@ -29,9 +29,11 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
   }
 
   Future<void> _loadSalesData() async {
-    setState(() {
-      isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
     try {
       // Get outgoing items data
@@ -50,26 +52,30 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
       print('Called endpoint: outgoingItemsWeeklyStats');
       print('Raw response: $stats');
 
-      setState(() {
-        salesData = List<Map<String, dynamic>>.from(response['data'] ?? []);
-        filteredSalesData = salesData;
-        
-        // Extract categories from response
-        final List<dynamic> categoriesData = categoriesResponse['data'] ?? [];
-        categories = ['Semua Kategori'] + categoriesData.cast<String>();
-        
-        totalPages = int.tryParse(response['total_pages'].toString()) ?? 1;
-        
-        // Convert stats to chart data format
-        chartData = _convertStatsToChartData(stats);
-        
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          salesData = List<Map<String, dynamic>>.from(response['data'] ?? []);
+          filteredSalesData = salesData;
+          
+          // Extract categories from response
+          final List<dynamic> categoriesData = categoriesResponse['data'] ?? [];
+          categories = ['Semua Kategori'] + categoriesData.cast<String>();
+          
+          totalPages = int.tryParse(response['total_pages'].toString()) ?? 1;
+          
+          // Convert stats to chart data format
+          chartData = _convertStatsToChartData(stats);
+          
+          isLoading = false;
+        });
+      }
     } catch (e) {
       print('Error loading sales data: $e');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,11 +171,13 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
 
   Future<void> _handleSearch(String query, String category) async {
     try {
-      setState(() {
-        searchQuery = query;
-        selectedCategory = category;
-        currentPage = 1; // Reset to first page on search
-      });
+      if (mounted) {
+        setState(() {
+          searchQuery = query;
+          selectedCategory = category;
+          currentPage = 1; // Reset to first page on search
+        });
+      }
       
       await _loadSalesData();
     } catch (e) {
@@ -295,9 +303,11 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
                   children: [
                     IconButton(
                       onPressed: currentPage > 1 ? () async {
-                        setState(() {
-                          currentPage--;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            currentPage--;
+                          });
+                        }
                         await _loadSalesData();
                       } : null,
                       icon: const Icon(Icons.arrow_back_ios),
@@ -316,9 +326,11 @@ class _ManagerSalesPageWidgetState extends State<ManagerSalesPageWidget> {
                     ),
                     IconButton(
                       onPressed: currentPage < totalPages ? () async {
-                        setState(() {
-                          currentPage++;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            currentPage++;
+                          });
+                        }
                         await _loadSalesData();
                       } : null,
                       icon: const Icon(Icons.arrow_forward_ios),

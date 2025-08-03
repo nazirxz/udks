@@ -18,6 +18,7 @@ class _ReturnHistoryScreenState extends State<ReturnHistoryScreen> {
   String? _selectedStatus;
   int _currentPage = 1;
   bool _hasMoreData = true;
+  Set<int> _expandedItems = <int>{};
 
   final List<Map<String, String>> _statusOptions = [
     {'value': '', 'label': 'Semua Status'},
@@ -217,104 +218,182 @@ class _ReturnHistoryScreenState extends State<ReturnHistoryScreen> {
   }
 
   Widget _buildReturnItemCard(ReturnItem returnItem) {
+    final isExpanded = _expandedItems.contains(returnItem.id);
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        returnItem.namaBarang,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+      child: Column(
+        children: [
+          // Header - always visible
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedItems.remove(returnItem.id);
+                } else {
+                  _expandedItems.add(returnItem.id!);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          returnItem.namaBarang,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        returnItem.kategoriBarang,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                        const SizedBox(height: 4),
+                        Text(
+                          returnItem.kategoriBarang,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${returnItem.jumlahBarang} item',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _buildStatusChip(returnItem.status ?? 'pending'),
-              ],
+                  _buildStatusChip(returnItem.status ?? 'pending'),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    'Order',
+          ),
+          
+          // Expandable content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  
+                  // Detailed information
+                  _buildInfoItem(
+                    'Order Number',
                     returnItem.orderNumber,
                     Icons.receipt_outlined,
                   ),
-                ),
-                Expanded(
-                  child: _buildInfoItem(
-                    'Jumlah',
-                    '${returnItem.jumlahBarang} item',
-                    Icons.inventory_outlined,
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    'Alasan Pengembalian',
+                    returnItem.alasanPengembalian,
+                    Icons.comment_outlined,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _buildInfoItem(
-              'Alasan',
-              returnItem.alasanPengembalian,
-              Icons.comment_outlined,
-            ),
-            const SizedBox(height: 8),
-            _buildInfoItem(
-              'Tanggal Return',
-              returnItem.formattedDate,
-              Icons.calendar_today_outlined,
-            ),
-            if (returnItem.fotoUrl != null) ...[
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => _showImageDialog(returnItem.fotoUrl!),
-                child: Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[300]!),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    'Tanggal Return',
+                    returnItem.formattedDate,
+                    Icons.calendar_today_outlined,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      returnItem.fotoUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[100],
-                          child: Icon(
-                            Icons.broken_image,
-                            color: Colors.grey[400],
-                            size: 32,
-                          ),
-                        );
-                      },
+                  
+                  if (returnItem.namaProdusen != null && returnItem.namaProdusen!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildInfoItem(
+                      'Produsen',
+                      returnItem.namaProdusen!,
+                      Icons.business_outlined,
                     ),
-                  ),
-                ),
+                  ],
+                  
+                  // Photo section
+                  if (returnItem.fotoUrl != null) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.photo_outlined, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Foto Bukti',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () => _showImageDialog(returnItem.fotoUrl!),
+                                child: Container(
+                                  height: 100,
+                                  width: 100,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      returnItem.fotoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[100],
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            color: Colors.grey[400],
+                                            size: 32,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    _buildInfoItem(
+                      'Foto Bukti',
+                      'Tidak ada foto',
+                      Icons.photo_outlined,
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
+            crossFadeState: isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
       ),
     );
   }
@@ -371,7 +450,7 @@ class _ReturnHistoryScreenState extends State<ReturnHistoryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

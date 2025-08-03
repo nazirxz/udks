@@ -17,6 +17,7 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
   List<String> returnReasons = [];
   List<String> returnStatus = [];
   bool isLoading = true;
+  final Set<int> _expandedItems = <int>{};
 
   @override
   void initState() {
@@ -58,10 +59,13 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
       List<Map<String, dynamic>> processedData = [];
       final returnItemsData = returnItemsResult['data'] as List;
       
+      print('DEBUG: Return items raw data length: ${returnItemsData.length}');
+      
       for (final item in returnItemsData) {
         // Handle both ReturnItem objects and Map objects
         if (item is Map<String, dynamic>) {
-          processedData.add({
+          print('DEBUG: Processing Map item: $item');
+          final processedItem = {
             'id': item['id'] ?? 0,
             'nama_barang': item['product_name'] ?? item['nama_barang'] ?? '',
             'kategori_barang': item['category'] ?? item['kategori_barang'] ?? '',
@@ -72,7 +76,9 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
             'waktu_pengembalian': item['return_time'] ?? item['waktu_pengembalian'] ?? '',
             'status_pengembalian': item['status'] ?? item['status_pengembalian'] ?? '',
             'reason_category': item['reason_category'] ?? '',
-          });
+          };
+          print('DEBUG: Processed item quantity: ${processedItem['jumlah_barang']}');
+          processedData.add(processedItem);
         } else {
           // Handle ReturnItem objects
           final returnItem = item as dynamic;
@@ -343,6 +349,264 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
       });
     }
   }
+  
+  Widget _buildReturnItemCard(Map<String, dynamic> item, int index) {
+    final isExpanded = _expandedItems.contains(item['id']);
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        children: [
+          // Header - always visible
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedItems.remove(item['id']);
+                } else {
+                  _expandedItems.add(item['id']);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Index number
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$index',
+                        style: TextStyle(
+                          color: Colors.red.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Main content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['nama_barang'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(item['kategori_barang']).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item['kategori_barang'] ?? '',
+                                style: TextStyle(
+                                  color: _getCategoryColor(item['kategori_barang']),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${item['jumlah_barang']?.toString() ?? '0'} pcs',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(item['status_pengembalian']).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item['status_pengembalian'] ?? '',
+                                style: TextStyle(
+                                  color: _getStatusColor(item['status_pengembalian']),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Date and arrow
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _formatDate(item['tanggal_pengembalian']),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Expandable content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  
+                  // Detailed information
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Produsen',
+                          item['nama_produsen'] ?? '-',
+                          Icons.business_outlined,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Alasan',
+                          item['alasan_pengembalian'] ?? '-',
+                          Icons.info_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Tanggal Return',
+                          _formatDate(item['tanggal_pengembalian']),
+                          Icons.calendar_today_outlined,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Waktu Return',
+                          _formatDateTime(item['waktu_pengembalian']),
+                          Icons.access_time_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Action button
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleViewDetail(item['id']),
+                      icon: const Icon(Icons.visibility, size: 18),
+                      label: const Text('Lihat Detail'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getCategoryColor(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'elektronik':
+        return Colors.blue;
+      case 'peralatan':
+        return Colors.orange;
+      case 'makanan':
+        return Colors.green;
+      case 'minuman':
+        return Colors.purple; 
+      default:
+        return Colors.grey;
+    }
+  }
 
   void _handleViewDetail(int id) {
     // Find the item by id
@@ -572,101 +836,37 @@ class _AdminReturnPageWidgetState extends State<AdminReturnPageWidget> {
             
             const SizedBox(height: 16),
             
-            // Return Table
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-                  columns: const [
-                    DataColumn(label: Text('No', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Nama Barang', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Kategori Barang', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Jumlah Barang', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Nama Produsen', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Alasan Pengembalian', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Tanggal Pengembalian', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Waktu Pengembalian', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Status Pengembalian', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: filteredReturnData.isEmpty 
-                    ? [
-                        const DataRow(
-                          cells: [
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(
-                              Center(
-                                child: Text(
-                                  'Data kosong',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                            DataCell(Text('')),
-                          ],
-                        )
-                      ]
-                    : filteredReturnData.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final item = entry.value;
-                        
-                        return DataRow(
-                          cells: [
-                            DataCell(Text('${index + 1}')),
-                            DataCell(Text(item['nama_barang'] ?? '')),
-                            DataCell(Text(item['kategori_barang'] ?? '')),
-                            DataCell(Text('${item['jumlah_barang']} pcs')),
-                            DataCell(Text(item['nama_produsen'] ?? '')),
-                            DataCell(Text(item['alasan_pengembalian'] ?? '')),
-                            DataCell(Text(_formatDate(item['tanggal_pengembalian']))),
-                            DataCell(Text(_formatDateTime(item['waktu_pengembalian']))),
-                            DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(item['status_pengembalian']).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  item['status_pengembalian'] ?? '',
-                                  style: TextStyle(
-                                    color: _getStatusColor(item['status_pengembalian']),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                                onPressed: () => _handleViewDetail(item['id']),
-                                tooltip: 'Lihat Detail',
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
+            // Expandable Return Cards
+            if (filteredReturnData.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(32),
+                child: const Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.assignment_return_outlined,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Data return kosong',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              )
+            else
+              ...filteredReturnData.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                return _buildReturnItemCard(item, index + 1);
+              }).toList(),
           ],
         ),
       ),

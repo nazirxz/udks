@@ -13,6 +13,8 @@ class ReturnItem {
   final String alasanPengembalian;
   final String? fotoBukti;
   final String? fotoUrl;
+  final DateTime? tanggalPengembalian;
+  final DateTime? waktuPengembalian;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? status;
@@ -30,6 +32,8 @@ class ReturnItem {
     required this.alasanPengembalian,
     this.fotoBukti,
     this.fotoUrl,
+    this.tanggalPengembalian,
+    this.waktuPengembalian,
     this.createdAt,
     this.updatedAt,
     this.status,
@@ -55,9 +59,11 @@ class ReturnItem {
         alasanPengembalian: json['alasan_pengembalian']?.toString() ?? '',
         fotoBukti: json['foto_bukti']?.toString(),
         fotoUrl: json['foto_url']?.toString(),
+        tanggalPengembalian: json['tanggal_pengembalian'] != null ? DateTime.tryParse(json['tanggal_pengembalian']) : null,
+        waktuPengembalian: json['waktu_pengembalian'] != null ? DateTime.tryParse(json['waktu_pengembalian']) : null,
         createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
         updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) : null,
-        status: json['status']?.toString(),
+        status: json['status_pengembalian']?.toString(),
       );
     } catch (e) {
       print('DEBUG: Error in ReturnItem.fromJson: $e');
@@ -90,16 +96,29 @@ class ReturnItem {
       'alasan_pengembalian': alasanPengembalian,
       'foto_bukti': fotoBukti,
       'foto_url': fotoUrl,
+      'tanggal_pengembalian': tanggalPengembalian?.toIso8601String(),
+      'waktu_pengembalian': waktuPengembalian?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
-      'status': status,
+      'status_pengembalian': status,
     };
   }
 
   String get formattedDate {
-    if (createdAt == null) return '';
-    final date = createdAt!;
-    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    // Priority: waktuPengembalian > tanggalPengembalian > createdAt
+    DateTime? dateToFormat;
+    
+    if (waktuPengembalian != null) {
+      dateToFormat = waktuPengembalian;
+    } else if (tanggalPengembalian != null) {
+      dateToFormat = tanggalPengembalian;
+    } else if (createdAt != null) {
+      dateToFormat = createdAt;
+    }
+    
+    if (dateToFormat == null) return 'Tanggal tidak tersedia';
+    
+    return '${dateToFormat.day}/${dateToFormat.month}/${dateToFormat.year} ${dateToFormat.hour.toString().padLeft(2, '0')}:${dateToFormat.minute.toString().padLeft(2, '0')}';
   }
 
   String get statusText {

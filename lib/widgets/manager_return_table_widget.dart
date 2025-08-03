@@ -8,6 +8,7 @@ class ManagerReturnTableWidget extends StatefulWidget {
   final List<String> returnStatus;
   final Function(int) onView;
   final Function(String, String, String, String) onSearch;
+  final VoidCallback? onRefresh; // Added refresh callback
 
   const ManagerReturnTableWidget({
     Key? key,
@@ -17,6 +18,7 @@ class ManagerReturnTableWidget extends StatefulWidget {
     required this.returnStatus,
     required this.onView,
     required this.onSearch,
+    this.onRefresh, // Optional refresh callback
   }) : super(key: key);
 
   @override
@@ -27,6 +29,7 @@ class _ManagerReturnTableWidgetState extends State<ManagerReturnTableWidget> {
   String _selectedCategory = 'Semua Kategori';
   String _selectedReason = 'Semua Alasan';
   String _selectedStatus = 'Semua Status';
+  Set<int> _expandedItems = <int>{};
 
   @override
   Widget build(BuildContext context) {
@@ -203,191 +206,356 @@ class _ManagerReturnTableWidgetState extends State<ManagerReturnTableWidget> {
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columnSpacing: 8,
-                  horizontalMargin: 8,
-                  headingRowHeight: 40,
-                  dataRowHeight: 48,
-                  headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-                  columns: const [
-                    DataColumn(label: SizedBox(width: 30, child: Text('No', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 100, child: Text('Nama Barang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 60, child: Text('Kategori', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 80, child: Text('Tgl Return', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 50, child: Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 80, child: Text('Produsen', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 75, child: Text('Alasan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 50, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 70, child: Text('Nilai', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                    DataColumn(label: SizedBox(width: 40, child: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)))),
-                  ],
-                  rows: widget.returnData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          SizedBox(
-                            width: 30,
-                            child: Text(
-                              '${index + 1}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 10),
+              child: widget.returnData.isEmpty
+                ? Container(
+                    padding: const EdgeInsets.all(32),
+                    child: const Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.assignment_return_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Data return kosong',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 100,
-                            child: Text(
-                              item['nama_barang'] ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 60,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: _getCategoryColor(item['kategori_barang']).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                item['kategori_barang'] ?? '',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _getCategoryColor(item['kategori_barang']),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              _formatDate(item['tanggal_return'] ?? ''),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 50,
-                            child: Text(
-                              '${item['jumlah_return']}',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              item['nama_produsen'] ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 75,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: _getReasonColor(item['alasan_return']).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                item['alasan_return'] ?? '',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _getReasonColor(item['alasan_return']),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 50,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(item['status_return']).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                item['status_return'] ?? '',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _getStatusColor(item['status_return']),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 70,
-                            child: Text(
-                              'Rp ${_formatCurrency(item['nilai_return'] ?? 0)}',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.green, fontSize: 9),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          SizedBox(
-                            width: 40,
-                            child: IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.blue, size: 16),
-                              onPressed: () {
-                                widget.onView(item['id']);
-                                _handleViewDetail(item['id']);
-                              },
-                              tooltip: 'Lihat Detail',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: widget.returnData.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      return _buildReturnItemCard(item, index + 1);
+                    }).toList(),
+                  ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildReturnItemCard(Map<String, dynamic> item, int index) {
+    final isExpanded = _expandedItems.contains(item['id']);
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        children: [
+          // Header - always visible
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedItems.remove(item['id']);
+                } else {
+                  _expandedItems.add(item['id']);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Index number
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$index',
+                        style: TextStyle(
+                          color: Colors.orange.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Main content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['nama_barang'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(item['kategori_barang']).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item['kategori_barang'] ?? '',
+                                style: TextStyle(
+                                  color: _getCategoryColor(item['kategori_barang']),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(item['status_pengembalian']).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item['status_pengembalian'] ?? '-',
+                                style: TextStyle(
+                                  color: _getStatusColor(item['status_pengembalian']),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              () {
+                                print('DEBUG TABLE: Item data for quantity: $item');
+                                print('DEBUG TABLE: jumlah_barang value: ${item['jumlah_barang']}');
+                                print('DEBUG TABLE: jumlah_return value: ${item['jumlah_return']}');
+                                final quantity = item['jumlah_barang']?.toString() ?? item['jumlah_return']?.toString() ?? '0';
+                                print('DEBUG TABLE: Final quantity: $quantity');
+                                return '$quantity pcs';
+                              }(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Date and arrow
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _formatDate(item['tanggal_pengembalian'] ?? ''),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Expandable content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  
+                  // Detailed information
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Alasan Pengembalian',
+                          item['alasan_pengembalian'] ?? '-',
+                          Icons.comment_outlined,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Tanggal Return',
+                          _formatDate(item['tanggal_pengembalian']),
+                          Icons.calendar_today_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    'Waktu Pengembalian',
+                    _formatDateTime(item['waktu_pengembalian']),
+                    Icons.access_time_outlined,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Produsen',
+                          item['nama_produsen'] ?? '-',
+                          Icons.business_outlined,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          'Nilai Return',
+                          'Rp ${_formatCurrency(item['nilai_return'] ?? 0)}',
+                          Icons.attach_money,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Photo section if available
+                  if (item['foto_barang'] != null && item['foto_barang'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.photo_outlined, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Foto Barang',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 100,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    item['foto_barang'].toString(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[100],
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey[400],
+                                          size: 32,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    _buildInfoItem(
+                      'Foto Barang',
+                      'Tidak ada foto',
+                      Icons.photo_outlined,
+                    ),
+                  ],
+                  
+                  // Action button
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleViewDetail(item['id']),
+                      icon: const Icon(Icons.visibility, size: 18),
+                      label: const Text('Lihat Detail'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -406,22 +574,6 @@ class _ManagerReturnTableWidgetState extends State<ManagerReturnTableWidget> {
         return Colors.pink;
       case 'obat-obatan':
         return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // Return reason color method
-  Color _getReasonColor(String? reason) {
-    switch (reason?.toLowerCase()) {
-      case 'rusak':
-        return Colors.red;
-      case 'cacat':
-        return Colors.orange;
-      case 'kadaluarsa':
-        return Colors.purple;
-      case 'tidak sesuai pesanan':
-        return Colors.blue;
       default:
         return Colors.grey;
     }
@@ -468,6 +620,17 @@ class _ManagerReturnTableWidgetState extends State<ManagerReturnTableWidget> {
     );
   }
 
+  // Format date time method from admin return template
+  String _formatDateTime(String? dateTimeString) {
+    if (dateTimeString == null) return '';
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
   // View detail handler from admin sales template
   void _handleViewDetail(int id) {
     final item = widget.returnData.firstWhere((item) => item['id'] == id, orElse: () => {});
@@ -503,11 +666,19 @@ class _ManagerReturnTableWidgetState extends State<ManagerReturnTableWidget> {
                 _buildDetailItem('ID', item['id']?.toString() ?? '-'),
                 _buildDetailItem('Nama Barang', item['nama_barang']?.toString() ?? '-'),
                 _buildDetailItem('Kategori', item['kategori_barang']?.toString() ?? '-'),
-                _buildDetailItem('Jumlah Return', '${item['jumlah_return']?.toString() ?? '0'} pcs'),
-                _buildDetailItem('Tanggal Return', _formatDate(item['tanggal_return']?.toString() ?? '')),
+                _buildDetailItem('Jumlah Return', () {
+                  print('DEBUG DETAIL: Item data for quantity: $item');
+                  print('DEBUG DETAIL: jumlah_barang value: ${item['jumlah_barang']}');
+                  print('DEBUG DETAIL: jumlah_return value: ${item['jumlah_return']}');
+                  final quantity = item['jumlah_barang']?.toString() ?? item['jumlah_return']?.toString() ?? '0';
+                  print('DEBUG DETAIL: Final quantity: $quantity');
+                  return '$quantity pcs';
+                }()),
+                _buildDetailItem('Tanggal Return', _formatDate(item['tanggal_pengembalian']?.toString() ?? '')),
+                _buildDetailItem('Waktu Pengembalian', _formatDateTime(item['waktu_pengembalian']?.toString())),
                 _buildDetailItem('Produsen', item['nama_produsen']?.toString() ?? '-'),
-                _buildDetailItem('Alasan Return', item['alasan_return']?.toString() ?? '-'),
-                _buildDetailItem('Status Return', item['status_return']?.toString() ?? '-'),
+                _buildDetailItem('Alasan Pengembalian', item['alasan_pengembalian']?.toString() ?? '-'),
+                _buildDetailItem('Status Pengembalian', item['status_pengembalian']?.toString() ?? '-'),
                 _buildDetailItem('Nilai Return', 'Rp ${_formatCurrency(item['nilai_return'] ?? 0)}'),
                 
                 // Show photo if available

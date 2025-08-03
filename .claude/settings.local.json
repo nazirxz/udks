@@ -1,8 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git config:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(dart analyze:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

@@ -21,6 +21,7 @@ class ManagerSalesTableWidget extends StatefulWidget {
 
 class _ManagerSalesTableWidgetState extends State<ManagerSalesTableWidget> {
   String _selectedCategory = 'Semua Kategori';
+  Set<int> _expandedItems = <int>{};
 
   @override
   Widget build(BuildContext context) {
@@ -108,78 +109,302 @@ class _ManagerSalesTableWidgetState extends State<ManagerSalesTableWidget> {
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-                  columns: const [
-                    DataColumn(label: Text('No', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Nama Barang', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Kategori', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Tanggal Keluar', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Tujuan Distribusi', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: widget.salesData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${index + 1}')),
-                        DataCell(
-                          Text(
-                            item['nama_barang'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+              child: widget.salesData.isEmpty
+                ? Container(
+                    padding: const EdgeInsets.all(32),
+                    child: const Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.trending_up_outlined,
+                            size: 64,
+                            color: Colors.grey,
                           ),
-                        ),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getCategoryColor(item['kategori_barang']).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['kategori_barang'] ?? '',
-                              style: TextStyle(
-                                color: _getCategoryColor(item['kategori_barang']),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Data penjualan kosong',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                        ),
-                        DataCell(
-                          Text(
-                            _formatDate(item['tanggal_keluar_barang'] ?? ''),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        DataCell(Text('${item['jumlah_barang']} pcs')),
-                        DataCell(
-                          Text(
-                            item['tujuan_distribusi'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        DataCell(
-                          IconButton(
-                            icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
-                            onPressed: () => _handleViewDetail(item['id']),
-                            tooltip: 'Lihat Detail',
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: widget.salesData.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      return _buildSalesItemCard(item, index + 1);
+                    }).toList(),
+                  ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSalesItemCard(Map<String, dynamic> item, int index) {
+    final isExpanded = _expandedItems.contains(item['id']);
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        children: [
+          // Header - always visible
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedItems.remove(item['id']);
+                } else {
+                  _expandedItems.add(item['id']);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Index number
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$index',
+                        style: TextStyle(
+                          color: Colors.purple.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Main content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['nama_barang'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(item['kategori_barang']).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item['kategori_barang'] ?? '',
+                                style: TextStyle(
+                                  color: _getCategoryColor(item['kategori_barang']),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${item['jumlah_barang']} pcs',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Date and arrow
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _formatDate(item['tanggal_keluar_barang'] ?? ''),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Expandable content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  
+                  // Detailed information
+                  _buildInfoItem(
+                    'ID',
+                    item['id']?.toString() ?? '-',
+                    Icons.tag,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    'Tujuan Distribusi',
+                    item['tujuan_distribusi']?.toString() ?? '-',
+                    Icons.location_on_outlined,
+                  ),
+                  
+                  // Photo section if available
+                  if (item['foto_barang'] != null && item['foto_barang'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.photo_outlined, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Foto Barang',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 100,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    item['foto_barang'].toString(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[100],
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey[400],
+                                          size: 32,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    _buildInfoItem(
+                      'Foto Barang',
+                      'Tidak ada foto',
+                      Icons.photo_outlined,
+                    ),
+                  ],
+                  
+                  // Action button
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleViewDetail(item['id']),
+                      icon: const Icon(Icons.visibility, size: 18),
+                      label: const Text('Lihat Detail'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

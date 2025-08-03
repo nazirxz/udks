@@ -23,6 +23,11 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   List<Map<String, dynamic>> lowStockItems = [];
   bool isLoading = true;
   String? errorMessage;
+  
+  // Variables for date picker functionality
+  DateTime selectedDate = DateTime.now();
+  List<Map<String, dynamic>> selectedDateData = [];
+  bool isLoadingChart = false;
 
   @override
   void initState() {
@@ -231,10 +236,6 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         elevation: 0,
         actions: [
           DashboardUtils.buildUserInfoBadge(widget.user),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => DashboardUtils.showSnackBar(context, 'Notifikasi'),
-          ),
           DashboardUtils.buildPopupMenu(
             context, 
             widget.user, 
@@ -361,6 +362,10 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             _buildWelcomeCard(),
             const SizedBox(height: 20),
             
+            // Inventory Alerts - Moved to top for manager priority
+            _buildInventoryAlerts(),
+            const SizedBox(height: 20),
+            
             // Statistics Cards
             _buildStatisticsCards(),
             const SizedBox(height: 20),
@@ -371,10 +376,6 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             
             // Recent Transactions
             _buildRecentTransactions(),
-            const SizedBox(height: 20),
-            
-            // Inventory Alerts
-            _buildInventoryAlerts(),
           ],
         ),
       ),
@@ -450,13 +451,52 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Statistik Hari Ini',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+        // Header dengan date picker untuk statistik
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Statistik',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            // Date picker button untuk statistik cards
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: _selectDate,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: Colors.red.shade600,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDisplayDate(selectedDate),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Row(
@@ -464,7 +504,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             Expanded(
               child: _buildStatCard(
                 'Barang Masuk',
-                '${dashboardStats['barang_masuk_hari_ini'] ?? 0}',
+                '${_getSelectedDateStat('barang_masuk_hari_ini')}',
                 Icons.arrow_downward,
                 Colors.green,
               ),
@@ -473,7 +513,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             Expanded(
               child: _buildStatCard(
                 'Barang Keluar',
-                '${dashboardStats['barang_keluar_hari_ini'] ?? 0}',
+                '${_getSelectedDateStat('barang_keluar_hari_ini')}',
                 Icons.arrow_upward,
                 Colors.orange,
               ),
@@ -486,7 +526,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             Expanded(
               child: _buildStatCard(
                 'Transaksi Penjualan',
-                '${dashboardStats['transaksi_penjualan_hari_ini'] ?? 0}',
+                '${_getSelectedDateStat('transaksi_penjualan_hari_ini')}',
                 Icons.shopping_cart,
                 Colors.blue,
               ),
@@ -495,7 +535,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             Expanded(
               child: _buildStatCard(
                 'Transaksi Pembelian',
-                '${dashboardStats['transaksi_pembelian_hari_ini'] ?? 0}',
+                '${_getSelectedDateStat('transaksi_pembelian_hari_ini')}',
                 Icons.shopping_bag,
                 Colors.purple,
               ),
@@ -931,6 +971,251 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         ),
       );
     }
+  }
+
+  // Date picker methods
+  Future<void> _loadDataByDate(DateTime date) async {
+    print('Loading manager data for date: $date');
+    
+    if (!mounted) return;
+    
+    setState(() {
+      isLoadingChart = true;
+    });
+
+    try {
+      // Load daily stats for selected date
+      Map<String, dynamic> dailyStatsResult;
+      try {
+        // Use existing weekly stats API and filter by date
+        dailyStatsResult = await DashboardApiService.getWeeklyStats();
+      } catch (e) {
+        dailyStatsResult = {'success': false, 'message': 'Stats not available'};
+      }
+
+      // Process data for selected date
+      List<Map<String, dynamic>> processedData = [];
+      
+      if (dailyStatsResult['success']) {
+        final statsData = dailyStatsResult['data'];
+        
+        if (statsData != null) {
+          final labels = statsData['labels'] as List<dynamic>? ?? [];
+          final dataSection = statsData['data'] as Map<String, dynamic>?;
+          final barangMasuk = dataSection?['barang_masuk'] as List<dynamic>? ?? [];
+          final barangKeluar = dataSection?['barang_keluar'] as List<dynamic>? ?? [];
+          
+          // Find data for selected day
+          final selectedDayName = _getDayOfWeek(date);
+          int selectedDayIndex = -1;
+          
+          for (int i = 0; i < labels.length; i++) {
+            if (_getDayShort(labels[i].toString()) == _getDayShort(selectedDayName)) {
+              selectedDayIndex = i;
+              break;
+            }
+          }
+          
+          if (selectedDayIndex != -1 && selectedDayIndex < barangMasuk.length) {
+            final incomingValue = _safeToDouble(barangMasuk[selectedDayIndex]);
+            final outgoingValue = selectedDayIndex < barangKeluar.length ? _safeToDouble(barangKeluar[selectedDayIndex]) : 0.0;
+            
+            processedData = [{
+              'day': selectedDayName,
+              'day_short': _getDayShort(selectedDayName),
+              'incoming': incomingValue,
+              'outgoing': outgoingValue,
+              'barang_masuk_hari_ini': incomingValue.toInt(),
+              'barang_keluar_hari_ini': outgoingValue.toInt(),
+              'transaksi_penjualan_hari_ini': 0, // Default value
+              'transaksi_pembelian_hari_ini': 0, // Default value
+            }];
+          } else {
+            // If no data found for selected date, show zero
+            processedData = [{
+              'day': selectedDayName,
+              'day_short': _getDayShort(selectedDayName),
+              'incoming': 0.0,
+              'outgoing': 0.0,
+              'barang_masuk_hari_ini': 0,
+              'barang_keluar_hari_ini': 0,
+              'transaksi_penjualan_hari_ini': 0,
+              'transaksi_pembelian_hari_ini': 0,
+            }];
+          }
+        }
+      }
+      
+      // If no data available, create empty data for selected date
+      if (processedData.isEmpty) {
+        final selectedDayName = _getDayOfWeek(date);
+        processedData = [{
+          'day': selectedDayName,
+          'day_short': _getDayShort(selectedDayName),
+          'incoming': 0.0,
+          'outgoing': 0.0,
+          'barang_masuk_hari_ini': 0,
+          'barang_keluar_hari_ini': 0,
+          'transaksi_penjualan_hari_ini': 0,
+          'transaksi_pembelian_hari_ini': 0,
+        }];
+      }
+
+      if (!mounted) return;
+      
+      setState(() {
+        selectedDateData = processedData;
+        isLoadingChart = false;
+      });
+      
+      print('Successfully loaded manager data for date: $date, data: $processedData');
+
+    } catch (e) {
+      print('Error in manager _loadDataByDate: $e');
+      
+      if (!mounted) return;
+      
+      setState(() {
+        isLoadingChart = false;
+        final selectedDayName = _getDayOfWeek(date);
+        selectedDateData = [{
+          'day': selectedDayName,
+          'day_short': _getDayShort(selectedDayName),
+          'incoming': 0.0,
+          'outgoing': 0.0,
+          'barang_masuk_hari_ini': 0,
+          'barang_keluar_hari_ini': 0,
+          'transaksi_penjualan_hari_ini': 0,
+          'transaksi_pembelian_hari_ini': 0,
+        }];
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getDayOfWeek(DateTime date) {
+    const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    return days[date.weekday - 1];
+  }
+
+  String _getDayShort(String day) {
+    final dayLower = day.toLowerCase();
+    switch (dayLower) {
+      case 'monday':
+      case 'senin': 
+        return 'Sen';
+      case 'tuesday':
+      case 'selasa': 
+        return 'Sel';
+      case 'wednesday':
+      case 'rabu': 
+        return 'Rab';
+      case 'thursday':
+      case 'kamis': 
+        return 'Kam';
+      case 'friday':
+      case 'jumat':
+      case 'jum\'at': 
+        return 'Jum';
+      case 'saturday':
+      case 'sabtu': 
+        return 'Sab';
+      case 'sunday':
+      case 'minggu': 
+        return 'Min';
+      default: 
+        return day.length >= 3 ? day.substring(0, 3) : day;
+    }
+  }
+
+  Future<void> _selectDate() async {
+    try {
+      print('Opening manager date picker...');
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2020),
+        lastDate: DateTime.now(),
+      );
+      
+      print('Manager date picker result: $picked');
+      
+      if (picked != null && picked != selectedDate) {
+        print('Updating manager selected date from $selectedDate to $picked');
+        setState(() {
+          selectedDate = picked;
+        });
+        await _loadDataByDate(picked);
+      }
+    } catch (e) {
+      print('Error opening manager date picker: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal membuka kalender'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatDisplayDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    
+    if (targetDate == today) {
+      return 'Hari Ini';
+    } else if (targetDate == today.subtract(const Duration(days: 1))) {
+      return 'Kemarin';
+    } else {
+      return '${date.day} ${months[date.month - 1]} ${date.year}';
+    }
+  }
+
+  // Method untuk mendapatkan statistik berdasarkan tanggal yang dipilih
+  int _getSelectedDateStat(String statKey) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    
+    // Jika tanggal yang dipilih adalah hari ini, gunakan dashboardStats
+    if (selectedDay == today) {
+      return dashboardStats[statKey] ?? 0;
+    }
+    
+    // Jika ada data untuk tanggal yang dipilih
+    if (selectedDateData.isNotEmpty) {
+      final dateData = selectedDateData.first;
+      switch (statKey) {
+        case 'barang_masuk_hari_ini':
+          return dateData['barang_masuk_hari_ini'] ?? dateData['incoming'] ?? 0;
+        case 'barang_keluar_hari_ini':
+          return dateData['barang_keluar_hari_ini'] ?? dateData['outgoing'] ?? 0;
+        case 'transaksi_penjualan_hari_ini':
+          return dateData['transaksi_penjualan_hari_ini'] ?? 0;
+        case 'transaksi_pembelian_hari_ini':
+          return dateData['transaksi_pembelian_hari_ini'] ?? 0;
+        default:
+          return 0;
+      }
+    }
+    
+    return 0;
   }
 
   String _formatCurrency(int amount) {

@@ -1,6 +1,8 @@
 // lib/widgets/manager_return_page_widget.dart
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../services/return_items_api_service.dart';
+import '../models/return_item.dart';
 import 'manager_return_table_widget.dart';
 import 'manager_return_chart_widget.dart';
 
@@ -30,11 +32,30 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
   int currentPage = 1;
   int totalPages = 1;
   int itemsPerPage = 15;
+  
+  // Timer for auto-refresh
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _startAutoRefresh();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    // Refresh data every 2 minutes for realtime updates
+    _refreshTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      if (mounted && !isLoading) {
+        _loadData();
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -48,39 +69,98 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
     });
 
     try {
-      // Load return items
-      final itemsResult = await ReturnItemsApiService.getReturnItems(
-        page: currentPage,
-        perPage: itemsPerPage,
-      );
-      
-      // Load categories
-      final categoriesResult = await ReturnItemsApiService.getCategories();
+      // Load return data using the same method as admin (more realtime)
+      final returnItemsResult = await ReturnItemsApiService.getReturnHistory(perPage: itemsPerPage);
       
       // Load weekly stats
-      final statsResult = await ReturnItemsApiService.getWeeklyReturnStats();
+      Map<String, dynamic> statsResult;
+      try {
+        statsResult = await ReturnItemsApiService.getWeeklyReturnStats();
+      } catch (e) {
+        statsResult = {'success': false, 'message': 'Weekly stats not available'};
+      }
+      
+      // Load categories
+      Map<String, dynamic> categoriesResult;
+      try {
+        categoriesResult = await ReturnItemsApiService.getCategories();
+      } catch (e) {
+        categoriesResult = {'success': false, 'message': 'Categories not available'};
+      }
+
+      if (!returnItemsResult['success']) {
+        throw Exception(returnItemsResult['message'] ?? 'Failed to fetch return items');
+      }
+
+      // Process return items data (same as admin)
+      List<dynamic> processedData = [];
+      final returnItemsData = returnItemsResult['data'] as List;
+      
+      print('DEBUG MANAGER: Return items raw data length: ${returnItemsData.length}');
+      
+      for (final item in returnItemsData) {
+        // Handle both ReturnItem objects and Map objects
+        if (item is Map<String, dynamic>) {
+          print('DEBUG MANAGER: Processing Map item: $item');
+          final processedItem = {
+            'id': item['id'] ?? 0,
+            'nama_barang': item['product_name'] ?? item['nama_barang'] ?? '',
+            'kategori_barang': item['category'] ?? item['kategori_barang'] ?? '',
+            'jumlah_barang': item['quantity'] ?? item['jumlah_barang'] ?? 0,
+            'nama_produsen': item['producer_name'] ?? item['nama_produsen'] ?? '',
+            'alasan_pengembalian': item['reason'] ?? item['alasan_pengembalian'] ?? '',
+            'tanggal_pengembalian': item['return_date'] ?? item['tanggal_pengembalian'] ?? '',
+            'waktu_pengembalian': item['return_time'] ?? item['waktu_pengembalian'] ?? '',
+            'status_pengembalian': item['status'] ?? item['status_pengembalian'] ?? '',
+            'reason_category': item['reason_category'] ?? '',
+          };
+          print('DEBUG MANAGER: Processed item quantity: ${processedItem['jumlah_barang']}');
+          processedData.add(processedItem);
+        } else {
+          // Handle ReturnItem objects
+          final returnItem = item as dynamic;
+          processedData.add({
+            'id': returnItem.id ?? 0,
+            'nama_barang': returnItem.namaBarang ?? '',
+            'kategori_barang': returnItem.kategoriBarang ?? '',
+            'jumlah_barang': returnItem.jumlahBarang ?? 0,
+            'nama_produsen': returnItem.namaProdusen ?? '',
+            'alasan_pengembalian': returnItem.alasanPengembalian ?? '',
+            'tanggal_pengembalian': returnItem.formattedDate ?? '',
+            'waktu_pengembalian': returnItem.formattedDate ?? '',
+            'status_pengembalian': returnItem.statusText ?? '',
+            'reason_category': '',
+          });
+        }
+      }
 
       setState(() {
-        if (itemsResult['success']) {
-          returnItems = itemsResult['data'] ?? [];
-          filteredReturnItems = List.from(returnItems);
-          
-          final pagination = itemsResult['pagination'] ?? {};
-          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
-          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
-          
-        } else {
-          errorMessage = itemsResult['message'];
-        }
-
+        returnItems = processedData;
+        filteredReturnItems = List.from(returnItems);
+        
+        // Handle categories
         if (categoriesResult['success']) {
-          final apiCategories = List<String>.from(categoriesResult['data']);
+          final apiCategories = List<String>.from(categoriesResult['data'] ?? []);
           categories = ['Semua Kategori', ...apiCategories];
+          
+          // Extract unique return reasons from the data
+          Set<String> reasonSet = returnItems
+              .map((item) => item['alasan_pengembalian']?.toString() ?? '')
+              .where((reason) => reason.isNotEmpty)
+              .toSet();
+          returnReasons = ['Semua Alasan', ...reasonSet.toList()];
+          
+          // Extract unique status from the data
+          Set<String> statusSet = returnItems
+              .map((item) => item['status_pengembalian']?.toString() ?? '')
+              .where((status) => status.isNotEmpty)
+              .toSet();
+          returnStatus = ['Semua Status', ...statusSet.toList()];
         }
 
+        // Handle weekly stats
         if (statsResult['success']) {
           weeklyStats = statsResult['data'] ?? {};
-        } else {
         }
 
         isLoading = false;
@@ -90,12 +170,12 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
         errorMessage = 'Error loading data: $e';
         isLoading = false;
       });
+      print('Error in manager _loadReturnItems: $e');
     }
   }
 
   Future<void> _handleSearch(String query, String category, String reason, String status) async {
     setState(() {
-      isLoading = true;
       searchQuery = query;
       selectedCategory = category;
       selectedReason = reason;
@@ -103,36 +183,90 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
     });
 
     try {
-      final result = await ReturnItemsApiService.getReturnItems(
-        page: currentPage,
-        perPage: itemsPerPage,
-        search: query.isNotEmpty ? query : null,
-        kategori: category != 'Semua Kategori' ? category : null,
-        // Note: API might not support reason and status filters, adjust as needed
-      );
-
-      if (result['success']) {
+      if (query.isEmpty && category == 'Semua Kategori' && reason == 'Semua Alasan' && status == 'Semua Status') {
+        // No filters - show all data
         setState(() {
-          returnItems = result['data'] ?? [];
           filteredReturnItems = List.from(returnItems);
-          
-          final pagination = result['pagination'] ?? {};
-          currentPage = int.tryParse(pagination['current_page'].toString()) ?? 1;
-          totalPages = int.tryParse(pagination['last_page'].toString()) ?? 1;
         });
-      } else {
-        setState(() {
-          errorMessage = result['message'];
-        });
+        return;
       }
+
+      // Use API search if there's a search query (same as admin)
+      if (query.isNotEmpty) {
+        final searchResult = await ReturnItemsApiService.searchReturnItems(
+          query: query,
+          kategori: category != 'Semua Kategori' ? category : null,
+          reasonCategory: reason != 'Semua Alasan' ? reason : null,
+        );
+
+        if (searchResult['success']) {
+          List<dynamic> processedSearchData = [];
+          final searchData = searchResult['data'] as List;
+          
+          for (final item in searchData) {
+            // Handle both ReturnItem objects and Map objects
+            if (item is Map<String, dynamic>) {
+              processedSearchData.add({
+                'id': item['id'] ?? 0,
+                'nama_barang': item['product_name'] ?? item['nama_barang'] ?? '',
+                'kategori_barang': item['category'] ?? item['kategori_barang'] ?? '',
+                'jumlah_barang': item['quantity'] ?? item['jumlah_barang'] ?? 0,
+                'nama_produsen': item['producer_name'] ?? item['nama_produsen'] ?? '',
+                'alasan_pengembalian': item['reason'] ?? item['alasan_pengembalian'] ?? '',
+                'tanggal_pengembalian': item['return_date'] ?? item['tanggal_pengembalian'] ?? '',
+                'waktu_pengembalian': item['return_time'] ?? item['waktu_pengembalian'] ?? '',
+                'status_pengembalian': item['status'] ?? item['status_pengembalian'] ?? '',
+                'reason_category': item['reason_category'] ?? '',
+              });
+            } else {
+              // Handle ReturnItem objects
+              final returnItem = item as dynamic;
+              processedSearchData.add({
+                'id': returnItem.id ?? 0,
+                'nama_barang': returnItem.namaBarang ?? '',
+                'kategori_barang': returnItem.kategoriBarang ?? '',
+                'jumlah_barang': returnItem.jumlahBarang ?? 0,
+                'nama_produsen': returnItem.namaProdusen ?? '',
+                'alasan_pengembalian': returnItem.alasanPengembalian ?? '',
+                'tanggal_pengembalian': returnItem.formattedDate ?? '',
+                'waktu_pengembalian': returnItem.formattedDate ?? '',
+                'status_pengembalian': returnItem.statusText ?? '',
+                'reason_category': '',
+              });
+            }
+          }
+
+          setState(() {
+            filteredReturnItems = processedSearchData;
+          });
+          return;
+        }
+      }
+
+      // Local filtering if API search not applicable
+      List<dynamic> filtered = List.from(returnItems);
+
+      if (category != 'Semua Kategori') {
+        filtered = filtered.where((item) => item['kategori_barang'] == category).toList();
+      }
+
+      if (reason != 'Semua Alasan') {
+        filtered = filtered.where((item) => item['alasan_pengembalian'] == reason).toList();
+      }
+
+      if (status != 'Semua Status') {
+        filtered = filtered.where((item) => item['status_pengembalian'] == status).toList();
+      }
+
+      setState(() {
+        filteredReturnItems = filtered;
+      });
+
     } catch (e) {
       setState(() {
         errorMessage = 'Error searching data: $e';
       });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      print('Error in manager _handleSearch: $e');
     }
   }
 
@@ -318,6 +452,7 @@ class _ManagerReturnPageWidgetState extends State<ManagerReturnPageWidget> {
               returnStatus: returnStatus,
               onView: _handleView,
               onSearch: _handleSearch,
+              onRefresh: _loadData, // Added refresh callback for realtime updates
             ),
             
             const SizedBox(height: 20),
